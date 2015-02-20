@@ -432,6 +432,28 @@ class Manager {
 	}
 
 	/**
+	 * Used to manually trigger a processing. Helpful
+     * for delayed upload of large files.
+	 *
+     * @param  Eloquent $instance
+     * @param  string   $queue_path
+	 * @return void
+	 */
+	public function processQueue($instance, $queue_path)
+	{
+        $this->instance = $instance;
+
+        // Get queue file
+        $file = $this->interpolator->interpolate("{$queue_path}/:filename", $this);
+
+        $this->uploadedFile = $this->IOWrapper->make($file);
+
+        $this->queueAllForWrite();
+
+        $this->save();
+	}
+
+	/**
      * Return the class type of the attachment's underlying
      * model instance.
      *
