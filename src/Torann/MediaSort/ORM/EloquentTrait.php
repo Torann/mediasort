@@ -119,7 +119,7 @@ trait EloquentTrait {
 
         if (preg_match("/:id\b/", $options['url']) !== 1)
         {
-            throw new Exception('Invalid Url: an id or parent_id interpolation is required.', 1);
+            throw new Exception('Invalid Url: an id interpolation is required.', 1);
         }
 
         $media = App::make('MediaSort', ['name' => $name, 'options' => $options]);
