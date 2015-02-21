@@ -144,7 +144,7 @@ class Manager {
         $class = "\\Torann\\MediaSort\\Connections\\" . ucfirst($class);
 
         if (! class_exists($class)) {
-            throw new InvalidClassException('Image processor not found.');
+            throw new InvalidClassException("Connections type \"{$class}\" not found.");
         }
 
         $this->connection = new $class($this);
