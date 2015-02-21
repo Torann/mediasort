@@ -49,11 +49,11 @@ class Manager {
 	protected $IOWrapper;
 
     /**
-     * An instance of the connection.
+     * An instance of the disk.
      *
-     * @var \Torann\MediaSort\Connections\AbstractConnection.
+     * @var \Torann\MediaSort\Disks\AbstractDisk.
      */
-    protected $connection;
+    protected $disk;
 
 	/**
 	 * The uploaded/resized files that have been queued up for deletion.
@@ -81,8 +81,8 @@ class Manager {
         $this->interpolator = new Interpolator();
         $this->IOWrapper    = new IOWrapper($this);
 
-        // Set connection
-        $this->setConnection($this->config->connection);
+        // Set disk
+        $this->setDisk($this->config->disk);
 	}
 
 	/**
@@ -134,30 +134,32 @@ class Manager {
 	}
 
     /**
-     * Set connection property.
+     * Set disk property.
      *
-     * @param  string $class
+     * @param  string $diskName
+     *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    public function setConnection($class)
+    public function setDisk($diskName)
     {
-        $class = "\\Torann\\MediaSort\\Connections\\" . ucfirst($class);
+        $diskName = ucfirst($diskName);
+        $class = "\\Torann\\MediaSort\\Disks\\{$diskName}";
 
         if (! class_exists($class)) {
-            throw new InvalidClassException('Image processor not found.');
+            throw new InvalidClassException("Disk type \"{$diskName}\" not found.");
         }
 
-        $this->connection = new $class($this);
+        $this->disk = new $class($this);
     }
 
     /**
-     * Accessor method for the connection property.
+     * Accessor method for the disk property.
      *
-     * @return \Torann\MediaSort\Connections\AbstractConnection
+     * @return \Torann\MediaSort\Disks\AbstractDisk
      */
-    public function getConnection()
+    public function getDisk()
     {
-        return $this->connection;
+        return $this->disk;
     }
 
     /**
@@ -168,16 +170,6 @@ class Manager {
     public function getInterpolator()
     {
         return $this->interpolator;
-    }
-
-    /**
-     * Is media local.
-     *
-     * @return bool
-     */
-    public function isLocal()
-    {
-        return $this->connection->isLocal();
     }
 
 	/**
@@ -237,11 +229,11 @@ class Manager {
     /**
      * Remove an attached file.
      *
-     * @param array $filePaths
+     * @param array $files
      */
-    public function remove($filePaths)
+    public function remove($files)
     {
-        return $this->connection->remove($filePaths);
+        return $this->disk->remove($files);
     }
 
     /**
@@ -249,12 +241,12 @@ class Manager {
      * The file can be an actual uploaded file object or the path to
      * a resized image file on disk.
      *
-     * @param  string  $file
-     * @param  string  $filePath
+     * @param  string  $source
+     * @param  string  $target
      */
-    public function move($file, $filePath)
+    public function move($source, $target)
     {
-        return $this->connection->move($file, $filePath);
+        return $this->disk->move($source, $target);
     }
 
 	/**
@@ -265,27 +257,26 @@ class Manager {
 	*/
 	public function url($styleName = '')
 	{
-		if ($this->originalFilename()) {
-            return $this->connection->url($styleName);
-		}
+        if ($this->originalFilename()) {
+            return asset($this->prefix_url.$this->path($styleName));
+        }
 
-		return $this->defaultUrl($styleName);
+        return $this->defaultUrl($styleName);
 	}
 
 	/**
-	 * Generates the file system path to an uploaded file.  This is used for saving files, etc.
+	 * Generates the filesystem path to an uploaded file.
 	 *
 	 * @param string $styleName
 	 * @return string
 	*/
 	public function path($styleName = '')
 	{
-		if ($this->originalFilename())
-        {
+		if ($this->originalFilename()) {
             return $this->interpolator->interpolate($this->url, $this, $styleName);
 		}
 
-		return $this->defaultPath($styleName);
+		return $this->defaultUrl($styleName);
 	}
 
 	/**
@@ -415,7 +406,7 @@ class Manager {
 
 		foreach ($this->styles as $style)
 		{
-            $file = $this->getConnection()->path($style->name);
+            $file = $this->path($style->name);
 
 			$file = $this->IOWrapper->make($file);
 
@@ -515,16 +506,16 @@ class Manager {
 		return '';
 	}
 
-	/**
-	 * Generates the default path if no file attachment is present.
-	 *
-	 * @param string $styleName
-	 * @return string
-	*/
-	protected function defaultPath($styleName = '')
-	{
-		return $this->defaultUrl($styleName);
-	}
+//	/**
+//	 * Generates the default path if no file attachment is present.
+//	 *
+//	 * @param string $styleName
+//	 * @return string
+//	*/
+//	protected function defaultPath($styleName = '')
+//	{
+//		return $this->defaultUrl($styleName);
+//	}
 
 	/**
 	 * Fill the queuedForWrite que with all of this attachment's styles.

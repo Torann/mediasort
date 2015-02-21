@@ -4,10 +4,23 @@ return array(
 
     /*
     |--------------------------------------------------------------------------
+    | Local Root Path
+    |--------------------------------------------------------------------------
+    |
+	| The path option is the location where your local files will be stored
+    | at on disk. This is only used for local storage. If set to null MediaSort
+    | will use the "root" setting in the filesystem config.
+    |
+    */
+
+    'local_root' => ':laravel_root/public',
+
+    /*
+    |--------------------------------------------------------------------------
     | File Url
     |--------------------------------------------------------------------------
     |
-    | The url (relative to your project document root) where files will be stored.
+    | The url (relative to your project public directory) where files will be stored.
     | It is composed of 'interpolations' that will be replaced their
     | corresponding values during runtime.  It's unique in that it functions as both
     | a configuration option and an interpolation.
@@ -18,16 +31,22 @@ return array(
 
     /*
     |--------------------------------------------------------------------------
-    | Image Processing Library
+    | Prefix URL
     |--------------------------------------------------------------------------
     |
-    | The default library used for image processing.  Can be one of the following:
-    | \\Imagine\\Gd\\Imagine, \\Imagine\\Imagick\\Imagine,
-    | or \\Imagine\\Gmagick\\Imagine.
+	| Prefix URL used when displaying a media item. This is helpful for
+    | cloud storage or a subdomain location. If left blank the URL will be
+    | the same as the requesting domain.
+    |
+    | e.g '//cdn.example.com' will produce
+    |     '//cdn.example.com/uploads/me.jpg'.
+    |
+    | e.g '//foo.s3.amazonaws.com' will produce
+    |     '//foo.s3.amazonaws.com/uploads/me.jpg'.
     |
     */
 
-    'image_processor' => '\\Imagine\\Gd\\Imagine',
+    'prefix_url' => '',
 
     /*
     |--------------------------------------------------------------------------
@@ -41,6 +60,32 @@ return array(
     */
 
     'default_url' => '/images/:media/:style/missing.png',
+
+    /*
+    |--------------------------------------------------------------------------
+    | File visibility
+    |--------------------------------------------------------------------------
+    |
+	| Here you may configure the visibility of the newly uploaded file. This
+    | primarily pertains to cloud based file storage. Options are 'public'
+    | or 'private'
+    |
+    */
+
+    'visibility' => 'public',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Image Processing Library
+    |--------------------------------------------------------------------------
+    |
+    | The default library used for image processing.  Can be one of the following:
+    | \\Imagine\\Gd\\Imagine, \\Imagine\\Imagick\\Imagine,
+    | or \\Imagine\\Gmagick\\Imagine.
+    |
+    */
+
+    'image_processor' => '\\Imagine\\Gd\\Imagine',
 
     /*
     |--------------------------------------------------------------------------

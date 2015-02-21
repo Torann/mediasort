@@ -25,7 +25,9 @@ class MediaSortServiceProvider extends ServiceProvider {
      */
     public function boot()
     {
-        $this->package('torann/mediasort');
+        $this->publishes([
+            __DIR__.'/../../config/mediasort.php' => config_path('mediasort.php'),
+        ]);
     }
 
     /**
@@ -58,7 +60,8 @@ class MediaSortServiceProvider extends ServiceProvider {
     {
         $this->app->bind('MediaSort', function($app, $params)
         {
-            $params['options']['connection'] = $app->config->get('graham-campbell/flysystem::default', 'local');
+            $params['options']['disk'] = $app->config->get('filesystems.default', 'local');
+
             $config = new Config($params['name'], $params['options']);
 
             return new Manager($config);

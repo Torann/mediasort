@@ -15,32 +15,33 @@ MediaSort upload package for Laravel 4 using the Flysystem.
 
 ## Installation
 
-To get the latest version of Hashids simply require it in your `composer.json` file.
 
-~~~
-"torann/mediasort": "0.1.*@dev"
-~~~
+To get the latest version of MediaSort simply require it in your `composer.json` file.
+
+```
+"torann/mediasort": "0.2.*@dev"
+```
 
 You'll then need to run `composer install` to download it and have the autoloader updated.
 
-Once MediaSort is installed you need to register the service provider with the application. Open up `config/app.php` and find the `providers` key.
+Once MediaSort is installed you need to register the service provider with the application. Open up `app/app.php` and find the `providers` key.
 
 ```php
-'Torann\MediaSort\MediaSortServiceProvider'
+'providers' => array(
+    'Torann\MediaSort\MediaSortServiceProvider',
+)
 ```
-
-> There is no need to add the Facade, the package will add it for you.
-
 
 ### Publish the configurations
 
 Run this on the command line from the root of your project:
 
-~~~
-$ php artisan config:publish torann/mediasort
-~~~
+```
+$ php artisan vendor:publish --provider="Torann\MediaSort\MediaSortServiceProvider"
+```
 
-A configuration file will be publish to `config/media items.php`.
+A configuration file will be publish to `config/mediasort.php`.
+
 
 
 ### Setup Laravel Flysystem
@@ -162,44 +163,47 @@ Having done this, you should now be able to configure MeidaSort however you see 
 ### MeidaSort-Configuration
 The following configuration settings apply to MeidaSort in general.
 
+* **url**: The url where files will be stored. It is composed of 'interpolations' that will be replaced their corresponding values during runtime. It's unique in that it functions as both a configuration option and an interpolation.
+* **local_root**: Similar to the url, the path option is the location where your files will be stored at on disk.
+* **prefix_url**: Prefix URL used when displaying a media item. This is helpful for cloud storage or a subdomain location. If left blank the URL will be the same as the requesting domain.
 *   **image_processing**: The underlying image processing library being used.  Defaults to `\\Imagine\\Gd\\Imagine` but can also be set to `\\Imagine\\Imagick\\Imagine` or `\\Imagine\\Gmagick\\Imagine`.
 *   **default_url**: The default file returned when no file upload is present for a record.
-*   **styles**: An array of image sizes defined for the file media item.  MeidaSort will attempt to use to format the file upload
-    into the defined style.
+* **visibility**: Here you may configure the visibility of the newly uploaded file. This primarily pertains to cloud based file storage. Options are `public` or `private`.
+* **styles**: An array of image sizes defined for the file attachment. MeidaSort will attempt to use to format the file upload into the defined style.
 *   **keep_old_files**: Set this to true in order to prevent older file uploads from being deleted from the file system when a record is updated.
 *   **preserve_files**: Set this to true in order to prevent a media item's file uploads from being deleted from the file system when an the media item object is destroyed (media item's are destroyed when their corresponding models are deleted/destroyed from the database).
 
 ## Interpolations
 With MeidaSort, uploaded files are accessed by configuring/defining path, url, and default_url strings which point to you uploaded file assets.  This is done via string interpolations.  Currently, the following interpolations are available for use:
 
-*   **:media** - The name of the file media as declared in the `hasMediaFile` function, e.g 'avatar'.
-*   **:class**  - The classname of the model containing the file media item, e.g User.  MeidaSort can handle namespacing of classes.
-*   **:basename** - The basename portion of the media file, e.g 'file' for file.jpg.
-*   **:extension** - The file extension type of the media file, e.g '.jpg'
+* **:media** - The name of the file media as declared in the `hasMediaFile` function, e.g 'avatar'.
+* **:class**  - The classname of the model containing the file media item, e.g User.  MeidaSort can handle namespacing of classes.
+* **:basename** - The basename portion of the media file, e.g 'file' for file.jpg.
+* **:extension** - The file extension type of the media file, e.g '.jpg'
 *   **:filename** - The name of the uploaded file, e.g 'some_file.jpg'
-*   **:id** - The id of the corresponding database record for the uploaded file.
-*   **:style** - The resizing style of the file (images only), e.g 'thumbnail' or 'original'.
-*   **:url** - The url string pointing to your uploaded file.  This interpolation is actually an interpolation itself.  It can be composed of any of the above interpolations (except itself). 
+* **:id** - The id of the corresponding database record for the uploaded file.
+* **:style** - The resizing style of the file (images only), e.g 'thumbnail' or 'original'.
+* **:laravel_root** - The path to the root of the laravel project.
 
 ## Image-Processing
 MeidaSort makes use of the [Imagine Image](https://packagist.org/packages/imagine/imagine) library for all image processing.  Out of the box, the following image processing patterns/directives will be recognized when defining MeidaSort styles:
 
-*   **width**: A style that defines a width only (landscape).  Height will be automagically selected to preserve aspect ratio.  This works well for resizing
+* **width**: A style that defines a width only (landscape).  Height will be automagically selected to preserve aspect ratio.  This works well for resizing
     images for display on mobile devices, etc.
-*   **xheight**: A style that defines a heigh only (portrait).  Width automagically selected to preserve aspect ratio.
-*   **widthxheight#**: Resize then crop.
-*   **widthxheight!**: Resize by exacty width and height.  Width and height emphatically given, original aspect ratio will be ignored.
-*   **widthxheight**: Auto determine both width and height when resizing.  This will resize as close as possible to the given dimensions while still preserving the original aspect ratio.
+* **xheight**: A style that defines a heigh only (portrait).  Width automagically selected to preserve aspect ratio.
+* **widthxheight#**: Resize then crop.
+* **widthxheight!**: Resize by exacty width and height.  Width and height emphatically given, original aspect ratio will be ignored.
+* **widthxheight**: Auto determine both width and height when resizing.  This will resize as close as possible to the given dimensions while still preserving the original aspect ratio.
 
 To create styles for a media item, simply define them (you may use any style name you like: foo, bar, baz, etc) inside the media item's styles array using a combination of the directives defined above:
 
 ````php
 'styles' => array(
-    'thumbnail' => '50x50',
-    'large' => '150x150',
-    'landscape' => '150',
-    'portrait' => 'portrait' => 'x150',
-    'foo' => '75x75',
+    'thumbnail'  => '50x50',
+    'large'      => '150x150',
+    'landscape'  => '150',
+    'portrait'   => 'x150',
+    'foo'        => '75x75',
     'fooCropped' => '75x75#'
 )
 ````
@@ -361,10 +365,12 @@ $profilePicture->photo = "http://foo.com/bar.jpg";
 This is very useful when working with third party API's such as Facebook, Twitter, etc.  Note that this feature requires that the CURL extension is included as part of your PHP installation.
 
 ## Advanced-Usage
+
 When working with media items, there may come a point where you wish to do things outside of the normal workflow.  For example, suppose you wish to clear out a media item (empty the media item fields in the underlying table record and remove the uploaded file from storage) without having to destroy the record itself.  In situations where you wish to clear the uploaded file from storage without saving the record, you can use the media's destroy method:
 
 ```php
 // Remove all of the media's uploaded files and empty the media attributes on the model:
+
 $profilePicture->photo->destroy();
 
 // For finer grained control, you can remove thumbnail files only (media attributes in the model will not be emptied).
@@ -378,13 +384,105 @@ You may also reprocess uploaded images on a media item by calling the reprocess(
 $profilePicture->photo->reprocess();
 ```
 
-This may also be achieved via a call to the MeidaSort:refresh command.
+This may also be achieved via a call to the `media:refresh` command.
 
 Reprocess all media items for the ProfilePicture model:
-php artisan MeidaSort:refresh ProfilePicture
+
+```
+$ php artisan media:refresh ProfilePicture
+```
 
 Reprocess only the photo media on the ProfilePicture model:
-php artisan MeidaSort:refresh TestPhoto --media="photo"
+
+```
+$ php artisan media:refresh TestPhoto --media="photo"
+```
 
 Reprocess a list of media items on the ProfilePicture model:
-php artisan MeidaSort:refresh TestPhoto --media="foo, bar, baz, etc"
+
+```
+$ php artisan media:refresh TestPhoto --media="foo, bar, baz, etc"
+```
+
+### Queued Processing
+For larger files that may timeout the server when trying to upload them we can use a queue. This was added for for a project I did that used chunk uploading for podcast files that needed to be stored on S3. Note below are just snippets, the chunk uploading part is not here.
+
+Files in my queue are stored using a custom variable added to my `app.php` configuration file. This was helpful in keeping the location stored in one place and not scattered around my code. This path is needed for MediaSort to know where to look for the file that needs processing.
+
+```
+array(
+	/*
+	|--------------------------------------------------------------------------
+	| File Queue Path
+	|--------------------------------------------------------------------------
+	|
+	| Used to temporarily store large files for queuing.
+	|
+	*/
+	
+    'queue_path' => public_path() . '/uploads/queue',
+
+);
+```
+
+After creation send the media to queue:
+
+```php
+$media  = Media::create([
+    'video' => Input::file('video')
+]);
+
+// Send to queue for processing
+Queue::push('\MyApp\Workers\MediaProcessor', [
+    'media_id' => $media->id
+]);
+```
+
+This is the worker file. 
+```php
+<?php namespace MyApp\Workers;
+
+class MediaProcessor {
+
+    public function fire($job, $data)
+    {
+        // Remove Job
+        $job->delete();
+
+        // Find media
+        $media = Media::find(array_get($data, 'media_id'));
+        
+        // Get queue path from config
+        $queue_path = Config::get('app.queue_path');
+
+        // Set as published
+        $media->updateState('processing');
+
+        // Process media
+        foreach ($media->getMediaFiles() as $file)
+        {
+            $file->processQueue($media, $queue_path);
+        }
+
+        // Set as published
+        $media->updateState('published');
+    }
+}
+```
+
+The `updateState` method on my Media model is used for the front-end. It displays what step in the progress the media item is in.
+
+```php
+    /**
+     * Change media state
+     *
+     * @param  string $state
+     * @return bool
+     */
+    public function updateState($state)
+    {
+        $this->state = $state;
+
+        return $this->save();
+    }
+```

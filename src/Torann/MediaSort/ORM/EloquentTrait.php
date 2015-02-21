@@ -65,7 +65,7 @@ trait EloquentTrait {
     }
 
     /**
-     * Handle the dynamic retrieval of attachment objects.
+     * Handle the dynamic retrieval of media items.
      *
      * @param  string $key
      * @return mixed
@@ -81,7 +81,7 @@ trait EloquentTrait {
     }
 
     /**
-     * Handle the dynamic setting of attachment objects.
+     * Handle the dynamic setting of media items.
      *
      * @param  string $key
      * @param  mixed $value
@@ -138,7 +138,7 @@ trait EloquentTrait {
      */
     protected function mergeOptions($options)
     {
-        $defaultOptions = Config::get('mediasort::config', array());
+        $defaultOptions = Config::get('mediasort', array());
         $options = array_merge($defaultOptions, (array) $options);
         $options['styles'] = array_merge((array) $options['styles'], ['original' => '']);
 

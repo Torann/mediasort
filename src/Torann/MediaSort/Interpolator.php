@@ -33,7 +33,7 @@ class Interpolator {
 	{
 		return [
 			':filename' => 'filename',
-			':url' => 'url',
+            ':laravel_root' => 'laravelRoot',
 			':class' => 'getClass',
 			':basename' => 'basename',
 			':extension' => 'extension',
@@ -53,18 +53,6 @@ class Interpolator {
 	protected function filename($manager, $styleName = '')
 	{
 		return $manager->originalFilename();
-	}
-
-	/**
-	 * Generates the url to a file upload.
-	 *
-	 * @param Manager $manager
-	 * @param string  $styleName
-	 * @return string
-	*/
-	protected function url($manager, $styleName = '')
-	{
-		return $this->interpolate($manager->url, $manager, $styleName);
 	}
 
 	/**
@@ -140,6 +128,18 @@ class Interpolator {
 	{
 		return $styleName ?: $manager->default_style;
 	}
+
+    /**
+     * Returns the root of the Laravel project.
+     *
+     * @param  Manager $manager
+     * @param  string  $styleName
+     * @return string
+     */
+    protected function laravelRoot($manager, $styleName = '')
+    {
+        return realpath(base_path());
+    }
 
 	/**
 	 * Utitlity function to turn a backslashed string into a string
