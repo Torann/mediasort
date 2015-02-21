@@ -43,11 +43,6 @@ $ php artisan vendor:publish --provider="Torann\MediaSort\MediaSortServiceProvid
 A configuration file will be publish to `config/mediasort.php`.
 
 
-
-### Setup Laravel Flysystem
-
-Follow [Graham Campbell](https://github.com/GrahamCampbell/Laravel-Flysystem/tree/1.0) directions for setting this up.
-
 ## Quickstart
 
 In the document root of your application (most likely the public folder), create a folder named system and 
