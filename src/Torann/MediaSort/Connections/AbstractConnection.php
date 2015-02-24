@@ -65,7 +65,7 @@ abstract class AbstractConnection {
         foreach ($filePaths as $filePath)
         {
             try {
-                Flysystem::delete($filePath);
+                Flysystem::deleteDir(dirname($filePath));
             }
             catch (\League\Flysystem\FileNotFoundException $e) {
                 // Ignore

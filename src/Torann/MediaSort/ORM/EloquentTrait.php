@@ -36,10 +36,7 @@ trait EloquentTrait {
     }
 
     /**
-     * Register eloquent event handlers.
-     * We'll spin through each of the media file defined on this class
-     * and register callbacks for the events we need to observe in order to
-     * handle file uploads.
+     * Register eloquent save and delete event handlers.
      *
      * @return void
      */
@@ -51,6 +48,16 @@ trait EloquentTrait {
             }
         });
 
+        static::bootMediaSortDeleting();
+    }
+
+    /**
+     * Register eloquent delete event handlers for queued sorting.
+     *
+     * @return void
+     */
+    public static function bootMediaSortDeleting()
+    {
         static::deleting(function($instance) {
             foreach($instance->mediaFiles as $mediaFile) {
                 $mediaFile->beforeDelete($instance);
