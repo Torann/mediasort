@@ -82,9 +82,6 @@ abstract class AbstractConnection {
      */
     public function move($file, $filePath)
     {
-        // Remove
-        $this->remove([$filePath]);
-
         // Open stream
         $stream = fopen($file, 'r+');
 
