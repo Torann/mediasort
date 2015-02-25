@@ -269,7 +269,7 @@ class Manager {
             return $this->connection->url($styleName);
 		}
 
-		return $this->defaultUrl($styleName);
+		return asset($this->defaultUrl($styleName));
 	}
 
 	/**
