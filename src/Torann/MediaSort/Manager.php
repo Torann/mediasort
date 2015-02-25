@@ -261,7 +261,7 @@ class Manager {
             return asset($this->prefix_url.$this->path($styleName));
         }
 
-        return $this->defaultUrl($styleName);
+        return asset($this->prefix_url.$this->defaultUrl($styleName));
 	}
 
 	/**
