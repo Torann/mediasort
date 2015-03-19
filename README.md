@@ -150,7 +150,7 @@ $table->timestamp("avatar_updated_at")->nullable();
 ## Configuration
 Configuration is available on both a per media item basis or globally through the configuration file settings.  MeidaSort is very flexible about how it processes configuration; global configuration options can be overwritten on a per media item basis so that you can easily cascade settings you would like to have on all media items while still having the freedom to customize an individual media item's configuration.  To get started, the first thing you'll probably want to do is publish the default configuration options to your app/config directory. 
 
- ```php
+```php
   php artisan config:publish torann/mediasort
 ``` 
 Having done this, you should now be able to configure MeidaSort however you see fit without fear of future updates overriding your configuration files. 
@@ -179,6 +179,7 @@ With MeidaSort, uploaded files are accessed by configuring/defining path, url, a
 * **:id** - The id of the corresponding database record for the uploaded file.
 * **:style** - The resizing style of the file (images only), e.g 'thumbnail' or 'original'.
 * **:laravel_root** - The path to the root of the laravel project.
+* **:app_url** - Base URL for the application.
 
 ## Image-Processing
 MeidaSort makes use of the [Imagine Image](https://packagist.org/packages/imagine/imagine) library for all image processing.  Out of the box, the following image processing patterns/directives will be recognized when defining MeidaSort styles:

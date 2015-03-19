@@ -265,7 +265,7 @@ class Manager {
             }
         }
 
-        return asset($this->prefix_url.$this->defaultUrl($styleName));
+        return asset($this->defaultUrl($styleName));
     }
 
     /**
@@ -506,8 +506,11 @@ class Manager {
      */
     protected function defaultUrl($styleName = '')
     {
-        if ($this->default_url) {
-            return $this->interpolator->interpolate($this->default_url, $this, $styleName);
+        if ($this->default_url)
+        {
+            $url = $this->interpolator->interpolate($this->default_url, $this, $styleName);
+
+            return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url.$url;
         }
 
         return '';

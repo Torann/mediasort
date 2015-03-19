@@ -39,6 +39,7 @@ class Interpolator {
 			':extension' => 'extension',
 			':id' => 'id',
 			':media' => 'media',
+			':app_url' => 'appUrl',
 			':style' => 'style'
 		];
 	}
@@ -127,6 +128,18 @@ class Interpolator {
 	protected function style($manager, $styleName = '')
 	{
 		return $styleName ?: $manager->default_style;
+	}
+
+	/**
+	 * Returns the the applications base URL.
+	 *
+	 * @param Manager $manager
+	 * @param string  $styleName
+	 * @return string
+	*/
+	protected function appUrl($manager, $styleName = '')
+	{
+		return url('/');
 	}
 
     /**

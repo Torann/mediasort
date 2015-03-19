@@ -59,7 +59,7 @@ return array(
     |
     */
 
-    'default_url' => '/images/:media/:style/missing.png',
+    'default_url' => ':app_url/images/:media/:style/missing.png',
 
     /*
     |--------------------------------------------------------------------------
