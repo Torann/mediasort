@@ -42,7 +42,7 @@ abstract class AbstractDisk {
         foreach ($files as $file)
         {
             try {
-                Storage::deleteDirectory($file);
+                Storage::delete($file);
             }
             // Ignore not found exceptions
             catch (Exception $e) {}
