@@ -1,9 +1,11 @@
-<?php namespace Torann\MediaSort\Disks;
+<?php
+
+namespace Torann\MediaSort\Disks;
 
 use Storage;
 
-class Local extends AbstractDisk {
-
+class Local extends AbstractDisk
+{
     /*
      * Used to determine if the path
      * has already been updated.
@@ -45,8 +47,7 @@ class Local extends AbstractDisk {
      */
     protected function setPathPrefix()
     {
-        if ($this->media->local_root && ! $this->root)
-        {
+        if ($this->media->local_root && !$this->root) {
             // Interpolate path
             $this->root = $this->media->getInterpolator()
                 ->interpolate($this->media->local_root, $this->media);

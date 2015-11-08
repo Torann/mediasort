@@ -1,10 +1,12 @@
-<?php namespace Torann\MediaSort;
+<?php
 
+namespace Torann\MediaSort;
+
+use Torann\MediaSort\File\Image\Resizer;
 use Torann\MediaSort\Exceptions\InvalidClassException;
-use \Torann\MediaSort\File\Image\Resizer;
 
-class Manager {
-
+class Manager
+{
     /**
      * The model the attachment belongs to.
      *
@@ -76,10 +78,10 @@ class Manager {
      */
     function __construct(Config $config)
     {
-        $this->config       = $config;
-        $this->resizer      = new Resizer($this->config->image_processor);
+        $this->config = $config;
+        $this->resizer = new Resizer($this->config->image_processor);
         $this->interpolator = new Interpolator();
-        $this->IOWrapper    = new IOWrapper($this);
+        $this->IOWrapper = new IOWrapper($this);
 
         // Set disk
         $this->setDisk($this->config->disk);
@@ -89,7 +91,7 @@ class Manager {
      * Handle the dynamic setting of attachment options.
      *
      * @param string $name
-     * @param mixed $value
+     * @param mixed  $value
      */
     public function __set($name, $value)
     {
@@ -145,7 +147,7 @@ class Manager {
         $diskName = ucfirst($diskName);
         $class = "\\Torann\\MediaSort\\Disks\\{$diskName}";
 
-        if (! class_exists($class)) {
+        if (!class_exists($class)) {
             throw new InvalidClassException("Disk type \"{$diskName}\" not found.");
         }
 
@@ -241,8 +243,8 @@ class Manager {
      * The file can be an actual uploaded file object or the path to
      * a resized image file on disk.
      *
-     * @param  string  $source
-     * @param  string  $target
+     * @param  string $source
+     * @param  string $target
      */
     public function move($source, $target)
     {
@@ -257,11 +259,9 @@ class Manager {
      */
     public function url($styleName = '')
     {
-        if ($this->originalFilename())
-        {
-            if ($url = $this->path($styleName))
-            {
-                return asset($this->prefix_url.$url);
+        if ($this->originalFilename()) {
+            if ($url = $this->path($styleName)) {
+                return asset($this->prefix_url . $url);
             }
         }
 
@@ -390,7 +390,7 @@ class Manager {
      */
     public function save()
     {
-        if (! $this->keep_old_files) {
+        if (!$this->keep_old_files) {
             $this->flushDeletes();
         }
 
@@ -404,12 +404,11 @@ class Manager {
      */
     public function reprocess()
     {
-        if (! $this->originalFilename()) {
+        if (!$this->originalFilename()) {
             return;
         }
 
-        foreach ($this->styles as $style)
-        {
+        foreach ($this->styles as $style) {
             if (!$file = $this->path($style->name)) {
                 continue;
             }
@@ -468,10 +467,8 @@ class Manager {
      */
     protected function flushWrites()
     {
-        foreach ($this->queuedForWrite as $style)
-        {
-            if ($style->value && $this->uploadedFile->isImage())
-            {
+        foreach ($this->queuedForWrite as $style) {
+            if ($style->value && $this->uploadedFile->isImage()) {
                 $file = $this->resizer->resize($this->uploadedFile, $style);
             }
             else {
@@ -506,11 +503,10 @@ class Manager {
      */
     protected function defaultUrl($styleName = '')
     {
-        if ($this->default_url)
-        {
+        if ($this->default_url) {
             $url = $this->interpolator->interpolate($this->default_url, $this, $styleName);
 
-            return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url.$url;
+            return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
         }
 
         return '';
@@ -535,7 +531,7 @@ class Manager {
      */
     protected function queueSomeForDeletion($stylesToClear)
     {
-        $filePaths = array_map(function($styleToClear) {
+        $filePaths = array_map(function ($styleToClear) {
             return $this->path($styleToClear);
         }, $stylesToClear);
 
@@ -553,26 +549,25 @@ class Manager {
             return;
         }
 
-        if (!$this->preserve_files)
-        {
-            $filePaths = array_map(function($style) {
+        if (!$this->preserve_files) {
+            $filePaths = array_map(function ($style) {
                 return $this->path($style->name);
             }, $this->styles);
 
             $this->queuedForDeletion = array_merge($this->queuedForDeletion, $filePaths);
         }
 
-        $this->instanceWrite('file_name', NULL);
-        $this->instanceWrite('file_size', NULL);
-        $this->instanceWrite('content_type', NULL);
-        $this->instanceWrite('updated_at', NULL);
+        $this->instanceWrite('file_name', null);
+        $this->instanceWrite('file_size', null);
+        $this->instanceWrite('content_type', null);
+        $this->instanceWrite('updated_at', null);
     }
 
     /**
      * Set an attachment attribute on the underlying model instance.
      *
      * @param  string $property
-     * @param  mixed $value
+     * @param  mixed  $value
      * @return void
      */
     protected function instanceWrite($property, $value)
@@ -582,8 +577,10 @@ class Manager {
         if ($property === 'file_name') {
             $this->instance->setAttribute($fieldName, $value);
         }
-        else if (array_key_exists($fieldName, $this->instance['fillable'])) {
-            $this->instance->setAttribute($fieldName, $value);
+        else {
+            if (array_key_exists($fieldName, $this->instance['fillable'])) {
+                $this->instance->setAttribute($fieldName, $value);
+            }
         }
     }
 }

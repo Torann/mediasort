@@ -1,7 +1,10 @@
-<?php namespace Torann\MediaSort\Exceptions;
+<?php
+
+namespace Torann\MediaSort\Exceptions;
 
 use Exception;
 
-class InvalidUrlOptionException extends Exception {
+class InvalidUrlOptionException extends Exception
+{
 
 }

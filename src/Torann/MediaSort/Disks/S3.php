@@ -1,4 +1,7 @@
-<?php namespace Torann\MediaSort\Disks;
+<?php
 
-class S3 extends AbstractDisk {
+namespace Torann\MediaSort\Disks;
+
+class S3 extends AbstractDisk
+{
 }

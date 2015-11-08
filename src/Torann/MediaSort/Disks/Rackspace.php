@@ -1,4 +1,7 @@
-<?php namespace Torann\MediaSort\Disks;
+<?php
 
-class Rackspace extends AbstractDisk {
+namespace Torann\MediaSort\Disks;
+
+class Rackspace extends AbstractDisk
+{
 }

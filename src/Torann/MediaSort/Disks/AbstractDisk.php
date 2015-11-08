@@ -1,12 +1,14 @@
-<?php namespace Torann\MediaSort\Disks;
+<?php
+
+namespace Torann\MediaSort\Disks;
 
 use File;
 use Config;
 use Storage;
 use Exception;
 
-abstract class AbstractDisk {
-
+abstract class AbstractDisk
+{
     /**
      * The current media object being processed.
      *
@@ -28,7 +30,7 @@ abstract class AbstractDisk {
      */
     function __construct($media)
     {
-        $this->media  = $media;
+        $this->media = $media;
         $this->config = Config::get('filesystems.disks.' . $this->media->disk);
     }
 
@@ -43,8 +45,7 @@ abstract class AbstractDisk {
         {
             try {
                 Storage::delete($file);
-            }
-            // Ignore not found exceptions
+            } // Ignore not found exceptions
             catch (Exception $e) {}
         }
     }
