@@ -50,7 +50,7 @@ class Local extends AbstractDisk
         if ($this->media->local_root && !$this->root) {
             // Interpolate path
             $this->root = $this->media->getInterpolator()
-                ->interpolate($this->media->local_root, $this->media);
+                ->interpolate($this->media->local_root);
 
             // Set path
             Storage::getDriver()

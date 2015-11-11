@@ -43,12 +43,12 @@ class Manager
     protected $resizer;
 
     /**
-     * An IOWrapper instance for converting file input formats (Symfony uploaded file object
+     * An FileManager instance for converting file input formats (Symfony uploaded file object
      * arrays, string, etc) into an instance of \Torann\MediaSort\UploadedFile.
      *
-     * @var \Torann\MediaSort\IOWrapper
+     * @var \Torann\MediaSort\FileManager
      */
-    protected $IOWrapper;
+    protected $fileManager;
 
     /**
      * An instance of the disk.
@@ -80,8 +80,8 @@ class Manager
     {
         $this->config = $config;
         $this->resizer = new Resizer($this->config->image_processor);
-        $this->interpolator = new Interpolator();
-        $this->IOWrapper = new IOWrapper($this);
+        $this->fileManager = new FileManager($this);
+        $this->interpolator = new Interpolator($this);
 
         // Set disk
         $this->setDisk($this->config->disk);
@@ -125,7 +125,7 @@ class Manager
             return;
         }
 
-        $this->uploadedFile = $this->IOWrapper->make($uploadedFile);
+        $this->uploadedFile = $this->fileManager->make($uploadedFile);
 
         $this->instanceWrite('file_name', $this->uploadedFile->getClientOriginalName());
         $this->instanceWrite('file_size', $this->uploadedFile->getClientSize());
@@ -277,7 +277,7 @@ class Manager
     public function path($styleName = '')
     {
         if ($this->originalFilename()) {
-            return $this->interpolator->interpolate($this->url, $this, $styleName);
+            return $this->interpolator->interpolate($this->url, $styleName);
         }
 
         return '';
@@ -408,12 +408,13 @@ class Manager
             return;
         }
 
-        foreach ($this->styles as $style) {
+        foreach ($this->styles as $style)
+        {
             if (!$file = $this->path($style->name)) {
                 continue;
             }
 
-            $file = $this->IOWrapper->make($file);
+            $file = $this->fileManager->make($file);
 
             if ($style->value && $file->isImage()) {
                 $file = $this->resizer->resize($file, $style);
@@ -440,9 +441,9 @@ class Manager
         $this->instance = $instance;
 
         // Get queue file
-        $file = $this->interpolator->interpolate("{$queue_path}/:filename", $this);
+        $file = $this->interpolator->interpolate("{$queue_path}/:filename");
 
-        $this->uploadedFile = $this->IOWrapper->make($file);
+        $this->uploadedFile = $this->fileManager->make($file);
 
         $this->queueAllForWrite();
 
@@ -467,7 +468,8 @@ class Manager
      */
     protected function flushWrites()
     {
-        foreach ($this->queuedForWrite as $style) {
+        foreach ($this->queuedForWrite as $style)
+        {
             if ($style->value && $this->uploadedFile->isImage()) {
                 $file = $this->resizer->resize($this->uploadedFile, $style);
             }
@@ -503,8 +505,9 @@ class Manager
      */
     protected function defaultUrl($styleName = '')
     {
-        if ($this->default_url) {
-            $url = $this->interpolator->interpolate($this->default_url, $this, $styleName);
+        if ($this->default_url)
+        {
+            $url = $this->interpolator->interpolate($this->default_url, $styleName);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
         }
@@ -549,7 +552,8 @@ class Manager
             return;
         }
 
-        if (!$this->preserve_files) {
+        if (!$this->preserve_files)
+        {
             $filePaths = array_map(function ($style) {
                 return $this->path($style->name);
             }, $this->styles);

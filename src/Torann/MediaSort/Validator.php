@@ -6,7 +6,7 @@ class Validator
 {
     /**
      * Validate the attachment options for an attachment type.
-     * A url is required to have either an :id or an :id_partition interpolation.
+     * A url is required to have either an {id} or an {id_partition} interpolation.
      *
      * @param  array $options
      * @return void
@@ -17,7 +17,7 @@ class Validator
     }
 
     /**
-     * Validate the attachment optioins for an attachment type when the storage
+     * Validate the attachment options for an attachment type when the storage
      * driver is set to 'filesystem'.
      *
      * @param  array $options
@@ -27,9 +27,8 @@ class Validator
      */
     protected function validateFilesystemOptions($options)
     {
-        if (preg_match("/:id\b/", $options['url']) !== 1 && preg_match("/:id_partition\b/",
-                $options['url']) !== 1 && preg_match("/:hash\b/", $options['url']) !== 1
-        ) {
+        if (strpos($options['url'], '{id}') === false && strpos($options['url'], '{id_partition}') === false
+            && strpos($options['url'], '{hash}') === false) {
             throw new Exceptions\InvalidUrlOptionException('Invalid Url: an id, id_partition, or hash interpolation is required.',
                 1);
         }

@@ -6,7 +6,7 @@ use Torann\MediaSort\File\UploadedFile;
 use Torann\MediaSort\Exceptions\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
-class IOWrapper
+class FileManager
 {
     /**
      * The current media object being processed.

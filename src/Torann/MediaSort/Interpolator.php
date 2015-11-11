@@ -5,144 +5,127 @@ namespace Torann\MediaSort;
 class Interpolator
 {
     /**
-     * Interpolate a string.
+     * Manager instance.
      *
-     * @param  string  $string
-     * @param  Manager $manager
-     * @param  string  $styleName
-     * @return string
+     * @var \Torann\MediaSort\Manager
      */
-    public function interpolate($string, $manager, $styleName = '')
-    {
-        foreach ($this->interpolations() as $key => $value) {
-            if (strpos($string, $key) !== false) {
-                $string = preg_replace("/$key\b/", $this->$value($manager, $styleName), $string);
-            }
-        }
+    protected $manager;
 
-        return $string;
+    /**
+     * Constructor method
+     *
+     * @param \Torann\MediaSort\Manager $manager
+     */
+    function __construct(Manager $manager)
+    {
+        $this->manager = $manager;
     }
 
     /**
-     * Returns a sorted list of all interpolations.  This list is currently hard coded
-     * (unlike its paperclip counterpart) but can be changed in the future so that
-     * all interpolation methods are broken off into their own class and returned automatically
+     * Interpolate a string.
      *
-     * @return array
+     * @param  string  $string
+     * @param  string  $styleName
+     * @return string
      */
-    protected function interpolations()
+    public function interpolate($string, $styleName = '')
     {
-        return [
-            ':filename' => 'filename',
-            ':laravel_root' => 'laravelRoot',
-            ':class' => 'getClass',
-            ':basename' => 'basename',
-            ':extension' => 'extension',
-            ':id' => 'id',
-            ':media' => 'media',
-            ':app_url' => 'appUrl',
-            ':style' => 'style'
-        ];
+        return preg_replace_callback("/{(([[:alnum:]]|_|-)+)?}/", function ($match) use ($styleName)
+        {
+            $value = $match[1];
+
+            // Is interpolator value?
+            if (method_exists($this, $value)) {
+                return $this->$value($styleName);
+            }
+
+            return $this->getAttribute($value);
+        }, $string);
     }
 
     /**
      * Returns the file name.
      *
-     * @param Manager $manager
-     * @param string  $styleName
      * @return string
      */
-    protected function filename($manager, $styleName = '')
+    protected function filename()
     {
-        return $manager->originalFilename();
+        return $this->manager->originalFilename();
     }
 
     /**
      * Returns the current class name, taking into account namespaces, e.g
      * '\\Swingline\\MediaSort' will become swingline/mediasort.
      *
-     * @param Manager $manager
-     * @param string  $styleName
      * @return string
      */
-    protected function getClass($manager, $styleName = '')
+    protected function getClass()
     {
-        return strtolower($this->handleBackslashes($manager->getInstanceClass()));
+        return strtolower($this->handleBackslashes($this->manager->getInstanceClass()));
     }
 
     /**
      * Returns the basename portion of the media file, e.g 'file' for file.jpg.
      *
-     * @param Manager $manager
-     * @param string  $styleName
      * @return string
      */
-    protected function basename($manager, $styleName = '')
+    protected function basename()
     {
-        return pathinfo($manager->originalFilename(), PATHINFO_FILENAME);
+        return pathinfo($this->manager->originalFilename(), PATHINFO_FILENAME);
     }
 
     /**
      * Returns the extension of the media file, e.g 'jpg' for file.jpg.
      *
-     * @param Manager $manager
-     * @param string  $styleName
      * @return string
      */
-    protected function extension($manager, $styleName = '')
+    protected function extension()
     {
-        return pathinfo($manager->originalFilename(), PATHINFO_EXTENSION);
+        return pathinfo($this->manager->originalFilename(), PATHINFO_EXTENSION);
     }
 
     /**
      * Returns the id of the current object instance.
      *
-     * @param Manager $manager
-     * @param string  $styleName
      * @return string
      */
-    protected function id($manager, $styleName = '')
+    protected function id()
     {
-        if ($key = $manager->model_primary_key) {
-            return $manager->getInstance()->{$key};
+        if ($key = $this->manager->model_primary_key) {
+            return $this->manager->getInstance()->{$key};
         }
 
-        return $manager->getInstance()->getKey();
+        return $this->manager->getInstance()->getKey();
     }
 
     /**
      * Returns the pluralized form of the media name. e.g.
      * "avatars" for an media of :avatar.
      *
-     * @param Manager $manager
-     * @param string  $styleName
      * @return string
      */
-    protected function media($manager, $styleName = '')
+    protected function media()
     {
-        return str_plural($manager->name);
+        return str_plural($this->manager->name);
     }
 
     /**
      * Returns the style, or the default style if an empty style is supplied.
      *
-     * @param Manager $manager
      * @param string  $styleName
      * @return string
      */
-    protected function style($manager, $styleName = '')
+    protected function style($styleName = '')
     {
-        return $styleName ?: $manager->default_style;
+        return $styleName ?: $this->manager->default_style;
     }
 
     /**
      * Returns the the applications base URL.
      *
-     * @param Manager $manager
-     * @param string  $styleName
      * @return string
      */
-    protected function appUrl($manager, $styleName = '')
+    protected function appUrl()
     {
         return url('/');
     }
@@ -150,11 +133,9 @@ class Interpolator
     /**
      * Returns the root of the Laravel project.
      *
-     * @param  Manager $manager
-     * @param  string  $styleName
      * @return string
      */
-    protected function laravelRoot($manager, $styleName = '')
+    protected function laravelRoot()
     {
         return realpath(base_path());
     }
@@ -169,5 +150,16 @@ class Interpolator
     protected function handleBackslashes($string)
     {
         return str_replace('\\', '/', ltrim($string, '\\'));
+    }
+
+    /**
+     * Return attribute from model.
+     *
+     * @param string  $string
+     * @return string
+     */
+    public function getAttribute($string)
+    {
+        return $this->manager->getInstance()->getAttribute($string);
     }
 }

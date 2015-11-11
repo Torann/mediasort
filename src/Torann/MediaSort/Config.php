@@ -50,7 +50,8 @@ class Config
      */
     public function __get($optionName)
     {
-        if (array_key_exists($optionName, $this->options)) {
+        if (array_key_exists($optionName, $this->options))
+        {
             if ($optionName == 'styles') {
                 return $this->convertToObject($this->options[$optionName]);
             }
@@ -73,7 +74,8 @@ class Config
     {
         $objects = [];
 
-        foreach ($arrayElements as $key => $value) {
+        foreach ($arrayElements as $key => $value)
+        {
             $object = new \stdClass();
             $object->name = $key;
             $object->value = $value;

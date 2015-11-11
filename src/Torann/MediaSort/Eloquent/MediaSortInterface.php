@@ -1,6 +1,6 @@
 <?php
 
-namespace Torann\MediaSort\ORM;
+namespace Torann\MediaSort\Eloquent;
 
 interface MediaSortInterface
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace Torann\MediaSort\ORM;
+namespace Torann\MediaSort\Eloquent;
 
 use Exception;
 
-trait EloquentTrait
+trait HasMediaTrait
 {
     /**
      * All of the model's current file media.
@@ -46,7 +46,7 @@ trait EloquentTrait
      *
      * @return void
      */
-    public static function bootEloquentTrait()
+    public static function bootHasMediaTrait()
     {
         static::saved(function ($instance) {
             foreach ($instance->mediaFiles as $mediaFile) {
@@ -117,7 +117,7 @@ trait EloquentTrait
     {
         $options = $this->mergeOptions($options);
 
-        if (preg_match("/:id\b/", $options['url']) !== 1) {
+        if (strpos($options['url'], '{id}') === false) {
             throw new Exception('Invalid Url: an id interpolation is required.', 1);
         }
 
