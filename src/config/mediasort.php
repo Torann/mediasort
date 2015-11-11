@@ -13,7 +13,7 @@ return array(
     |
     */
 
-    'local_root' => ':laravel_root/public',
+    'local_root' => '{laravel_root}/public',
 
     /*
     |--------------------------------------------------------------------------
@@ -27,7 +27,7 @@ return array(
     |
     */
 
-    'url' => '/system/:class/:media/:id/:style/:filename',
+    'url' => '/system/{class}/{media}/{id}/{style}/{filename}',
 
     /*
     |--------------------------------------------------------------------------
@@ -59,7 +59,7 @@ return array(
     |
     */
 
-    'default_url' => ':app_url/images/:media/:style/missing.png',
+    'default_url' => '{app_url}/images/{media}/{style}/missing.png',
 
     /*
     |--------------------------------------------------------------------------
@@ -111,7 +111,7 @@ return array(
     |
     */
 
-    'styles' => array(),
+    'styles' => [],
 
     /*
     |--------------------------------------------------------------------------
