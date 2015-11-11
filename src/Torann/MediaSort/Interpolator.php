@@ -32,14 +32,15 @@ class Interpolator
     {
         return preg_replace_callback("/{(([[:alnum:]]|_|-)+)?}/", function ($match) use ($styleName)
         {
-            $value = $match[1];
+            // Create local method call.
+            $method = "get" . studly_case($match[1]);
 
             // Is interpolator value?
-            if (method_exists($this, $value)) {
-                return $this->$value($styleName);
+            if (method_exists($this, $method)) {
+                return $this->$method($styleName);
             }
 
-            return $this->getAttribute($value);
+            return $this->getAttribute($match[1]);
         }, $string);
     }
 
@@ -48,7 +49,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function filename()
+    protected function getFilename()
     {
         return $this->manager->originalFilename();
     }
@@ -69,7 +70,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function basename()
+    protected function getBasename()
     {
         return pathinfo($this->manager->originalFilename(), PATHINFO_FILENAME);
     }
@@ -79,7 +80,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function extension()
+    protected function getExtension()
     {
         return pathinfo($this->manager->originalFilename(), PATHINFO_EXTENSION);
     }
@@ -89,7 +90,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function id()
+    protected function getId()
     {
         if ($key = $this->manager->model_primary_key) {
             return $this->manager->getInstance()->{$key};
@@ -104,7 +105,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function media()
+    protected function getMedia()
     {
         return str_plural($this->manager->name);
     }
@@ -115,7 +116,7 @@ class Interpolator
      * @param string  $styleName
      * @return string
      */
-    protected function style($styleName = '')
+    protected function getStyle($styleName = '')
     {
         return $styleName ?: $this->manager->default_style;
     }
@@ -125,7 +126,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function appUrl()
+    protected function getAppUrl()
     {
         return url('/');
     }
@@ -135,9 +136,20 @@ class Interpolator
      *
      * @return string
      */
-    protected function laravelRoot()
+    protected function getLaravelRoot()
     {
         return realpath(base_path());
+    }
+
+    /**
+     * Return attribute from model.
+     *
+     * @param string  $string
+     * @return string
+     */
+    public function getAttribute($string)
+    {
+        return $this->manager->getInstance()->getAttribute($string);
     }
 
     /**
@@ -152,14 +164,4 @@ class Interpolator
         return str_replace('\\', '/', ltrim($string, '\\'));
     }
 
-    /**
-     * Return attribute from model.
-     *
-     * @param string  $string
-     * @return string
-     */
-    public function getAttribute($string)
-    {
-        return $this->manager->getInstance()->getAttribute($string);
-    }
 }
