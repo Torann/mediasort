@@ -31,7 +31,7 @@ abstract class AbstractDisk
     function __construct($media)
     {
         $this->media = $media;
-        $this->config = Config::get('filesystems.disks.' . $this->media->disk);
+        $this->config = Config::get("filesystems.disks.{$this->media->disk}");
     }
 
     /**
