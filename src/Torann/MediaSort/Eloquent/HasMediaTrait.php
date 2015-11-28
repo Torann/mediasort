@@ -87,7 +87,7 @@ trait HasMediaTrait
      *
      * @param  string $key
      * @param  mixed  $value
-     * @return void
+     * @return $this
      */
     public function setAttribute($key, $value)
     {
@@ -97,10 +97,10 @@ trait HasMediaTrait
                 $mediaFile->setUploadedFile($value, $key);
             }
 
-            return;
+            return $this;
         }
 
-        parent::setAttribute($key, $value);
+        return parent::setAttribute($key, $value);
     }
 
     /**
@@ -143,5 +143,4 @@ trait HasMediaTrait
 
         return $options;
     }
-
 }
