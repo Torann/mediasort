@@ -269,6 +269,16 @@ class Manager
     }
 
     /**
+     * Determine if object has media.
+     *
+     * @return bool
+     */
+    public function hasMedia()
+    {
+        return ($this->originalFilename() && $this->path());
+    }
+
+    /**
      * Generates the filesystem path to an uploaded file.
      *
      * @param string $styleName
