@@ -30,8 +30,14 @@ class Interpolator
      */
     public function interpolate($string, $styleName = '')
     {
-        return preg_replace_callback("/{(([[:alnum:]]|_|-)+)?}/", function ($match) use ($styleName)
+        return preg_replace_callback("/{(([[:alnum:]]|_|\.|-)+)?}/", function ($match) use ($styleName)
         {
+//            // Get a value from relationship
+//            if (strpos($match[1], '.')) {
+//                list($key, $value) = explode('.', $match[1]);
+//                return $this->getAttribute($key)->getAttribute($value);
+//            }
+
             // Create local method call.
             $method = "get" . studly_case($match[1]);
 
