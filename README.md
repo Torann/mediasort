@@ -13,7 +13,7 @@ Documentation for the framework can be found on [Lyften.com](http://lyften.com/p
 
 ## Laravel 4
 
-For Laravel 4 Installation see []version 0.1](https://github.com/Torann/mediasort/tree/0.1);
+For Laravel 4 Installation see [version 0.1](https://github.com/Torann/mediasort/tree/0.1);
 
 ### License
 
