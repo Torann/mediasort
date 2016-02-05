@@ -1,32 +1,30 @@
 {
-    "name": "torann/mediasort",
-    "description": "A upload manager for Laravel 4 using the Flysystem.",
-    "keywords": ["upload", "validation", "file"],
-    "license": "BSD 2-Clause",
-    "authors": [
-        {
-            "name": "Daniel Stainback",
-            "email": "daniel@lyften.com"
-        }
-    ],
-    "require": {
-        "php": ">=5.4.0",
-        "illuminate/support": "~4.2",
-        "graham-campbell/flysystem": "~1.0",
-        "imagine/imagine": "~0.6.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "3.7.*"
-    },
-    "autoload": {
-        "psr-0": {
-            "Torann\\MediaSort": "src/"
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "0.1-dev"
-        }
-    },
-    "minimum-stability": "dev"
+  "name": "torann/mediasort",
+  "description": "Simply media manager for Laravel 5 using the builtin Flysystem.",
+  "keywords": ["upload", "media", "filesystem", "cloud storage", "file", "paperclip"],
+  "license": "BSD 2-Clause",
+  "authors": [
+    {
+      "name": "Daniel Stainback",
+      "email": "daniel@lyften.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.5.9",
+    "illuminate/support": "5.1.*|5.2.*",
+    "imagine/imagine": "~0.6.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^4.8"
+  },
+  "autoload": {
+    "psr-4": {
+      "Torann\\MediaSort\\": "src/Torann/MediaSort"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "0.2-dev"
+    }
+  }
 }

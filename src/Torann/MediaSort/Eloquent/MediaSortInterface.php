@@ -1,7 +1,9 @@
-<?php namespace Torann\MediaSort\ORM;
+<?php
 
-interface MediaSortInterface {
+namespace Torann\MediaSort\Eloquent;
 
+interface MediaSortInterface
+{
     /**
      * Accessor method for the $media property.
      *
@@ -14,7 +16,7 @@ interface MediaSortInterface {
      * This function acts as a quasi constructor for this trait.
      *
      * @param string $name
-     * @param array $options
+     * @param array  $options
      */
     public function hasMediaFile($name, array $options = []);
 
@@ -30,7 +32,7 @@ interface MediaSortInterface {
      * Handle the dynamic setting of attachment objects.
      *
      * @param  string $key
-     * @param  mixed $value
+     * @param  mixed  $value
      */
     public function setAttribute($key, $value);
 }

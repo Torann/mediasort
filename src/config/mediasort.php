@@ -4,17 +4,75 @@ return array(
 
     /*
     |--------------------------------------------------------------------------
+    | Local Root Path
+    |--------------------------------------------------------------------------
+    |
+    | The path option is the location where your local files will be stored
+    | at on disk. This is only used for local storage. If set to null MediaSort
+    | will use the "root" setting in the filesystem config.
+    |
+    */
+
+    'local_root' => '{laravel_root}/public',
+
+    /*
+    |--------------------------------------------------------------------------
     | File Url
     |--------------------------------------------------------------------------
     |
-    | The url (relative to your project document root) where files will be stored.
+    | The url (relative to your project public directory) where files will be stored.
     | It is composed of 'interpolations' that will be replaced their
     | corresponding values during runtime.  It's unique in that it functions as both
     | a configuration option and an interpolation.
     |
     */
 
-    'url' => '/system/:class/:media/:id/:style/:filename',
+    'url' => '/system/{class}/{media}/{id}/{style}/{filename}',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prefix URL
+    |--------------------------------------------------------------------------
+    |
+    | Prefix URL used when displaying a media item. This is helpful for
+    | cloud storage or a subdomain location. If left blank the URL will be
+    | the same as the requesting domain.
+    |
+    | e.g '//cdn.example.com' will produce
+    |     '//cdn.example.com/uploads/me.jpg'.
+    |
+    | e.g '//foo.s3.amazonaws.com' will produce
+    |     '//foo.s3.amazonaws.com/uploads/me.jpg'.
+    |
+    */
+
+    'prefix_url' => '',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Url
+    |--------------------------------------------------------------------------
+    |
+    | The url (relative to your project document root) containing a default image
+    | that will be used for attachments that don't currently have an uploaded image
+    | attached to them.
+    |
+    */
+
+    'default_url' => '{app_url}/images/{media}/{style}/missing.png',
+
+    /*
+    |--------------------------------------------------------------------------
+    | File visibility
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure the visibility of the newly uploaded file. This
+    | primarily pertains to cloud based file storage. Options are 'public'
+    | or 'private'
+    |
+    */
+
+    'visibility' => 'public',
 
     /*
     |--------------------------------------------------------------------------
@@ -28,19 +86,6 @@ return array(
     */
 
     'image_processor' => '\\Imagine\\Gd\\Imagine',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Default Url
-    |--------------------------------------------------------------------------
-    |
-    | The url (relative to your project document root) containing a default image
-    | that will be used for attachments that don't currently have an uploaded image
-    | attached to them.
-    |
-    */
-
-    'default_url' => '/images/:media/:style/missing.png',
 
     /*
     |--------------------------------------------------------------------------
@@ -66,7 +111,7 @@ return array(
     |
     */
 
-    'styles' => array(),
+    'styles' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -92,6 +137,18 @@ return array(
     |
     */
 
-    'preserve_files' => false
+    'preserve_files' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Primary key for the model
+    |--------------------------------------------------------------------------
+    |
+    | Sometimes a slug will be the primary key, but we'll not want to use it
+    | in the media URL. When set to `null` it will use the model's primary key.
+    |
+    */
+
+    'model_primary_key' => null,
 
 );

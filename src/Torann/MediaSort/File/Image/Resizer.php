@@ -1,266 +1,260 @@
-<?php namespace Torann\MediaSort\File\Image;
+<?php
 
-use Torann\MediaSort\Exceptions\InvalidClassException;
-use Torann\MediaSort\File\UploadedFile;
+namespace Torann\MediaSort\File\Image;
 
 use Imagine\Image\Box;
 use Imagine\Image\Point;
+use Torann\MediaSort\File\UploadedFile;
+use Torann\MediaSort\Exceptions\InvalidClassException;
 
-class Resizer {
+class Resizer
+{
+    /**
+     * Instance of Imagine Interface.
+     *
+     * @var mixed
+     */
+    protected $imagine;
 
-	/**
-	 * Instance of Imagine Interface.
-	 *
-	 * @var mixed
-	 */
-	protected $imagine;
-
-	/**
-	 * Constructor method
-	 *
-	 * @param  string $image_processor
+    /**
+     * Constructor method
+     *
+     * @param  string $image_processor
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
-	 */
-	function __construct($image_processor)
+     */
+    function __construct($image_processor)
     {
-        if (! class_exists($image_processor)) {
+        if (!class_exists($image_processor)) {
             throw new InvalidClassException('Image processor not found.');
         }
 
-		$this->imagine = new $image_processor;;
-	}
+        $this->imagine = new $image_processor;
+    }
 
-	/**
-	 * Resize an image using the computed settings.
-	 *
-	 * @param  \Torann\MediaSort\File\UploadedFile $file
-	 * @param  stdClass $style
-	 * @return string
-	 */
-	public function resize(UploadedFile $file, $style)
-	{
-		$filePath = tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
-
-		list($width, $height, $option) = $this->parseStyleDimensions($style);
-
-		$method = "resize" . ucfirst($option);
-
-		if ($method == 'resizeCustom')
-        {
-			$this->resizeCustom($file, $style->value)
-				->save($filePath);
-		}
-    	else {
-      		$this->$method($file, $width, $height)
-		       ->save($filePath);
-		}
-
-		return $filePath;
-	}
-
-	/**
-	 * parseStyleDimensions method
-	 *
-	 * Parse the given style dimensions to extract out the file processing options,
-	 * perform any necessary image resizing for a given style.
-	 *
-	 * @param  stdClass $style
-	 * @return array
-	 */
-	protected function parseStyleDimensions($style)
-  	{
-		if (is_callable($style->value)) {
-			return [null, null, 'custom'];
-		}
-
-		if (strpos($style->value, 'x') === false)
-		{
-			// Width given, height automagically selected to preserve aspect ratio (landscape).
-			$width = $style->value;
-
-			return [$width, null, 'landscape'];
-		}
-
-		$dimensions = explode('x', $style->value);
-		$width = $dimensions[0];
-		$height = $dimensions[1];
-
-		if (empty($width))
-    	{
-			// Height given, width automagically selected to preserve aspect ratio (portrait).
-			return [null, $height, 'portrait'];
-		}
-
-		$resizingOption = substr($height, -1, 1);
-
-		if ($resizingOption == '#')
-		{
-			// Resize, then crop.
-      		$height = rtrim($height, '#');
-
-			return [$width, $height, 'crop'];
-		}
-
-		if ($resizingOption == '!')
-		{
-			// Resize by exact width/height (does not preserve aspect ratio).
-			$height = rtrim($height, '!');
-
-			return [$width, $height, 'exact'];
-		}
-
-		// Let the script decide the best way to resize.
-		return [$width, $height, 'auto'];
-	}
-
-	/**
-	 * Resize an image as a landscape (width only)
-	 *
-	 * @param  UploadedFile $file
-	 * @param  string $width - The image's new width.
-	 * @param  string $height - The image's new height.
-
-     * @return \Imagine\Image
-	 */
-	protected function resizeLandscape(UploadedFile $file, $width, $height)
-	{
-		$image = $this->imagine
-			->open($file->getRealPath());
-
-		$dimensions = $image->getSize()
-			->widen($width);
-
-		$image = $image->resize($dimensions);
-
-		return $image;
-	}
-
-	/**
-	 * Resize an image as a portrait (height only)
-	 *
-	 * @param  UploadedFile $file
-	 * @param  string $width - The image's new width.
-	 * @param  string $height - The image's new height.
+    /**
+     * Resize an image using the computed settings.
      *
-	 * @return \Imagine\Image
-	 */
-	protected function resizePortrait(UploadedFile $file, $width, $height)
-	{
-		$image = $this->imagine
-			->open($file->getRealPath());
+     * @param  \Torann\MediaSort\File\UploadedFile $file
+     * @param  \stdClass                            $style
+     * @return string
+     */
+    public function resize(UploadedFile $file, $style)
+    {
+        $filePath = tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
 
-		$dimensions = $image->getSize()
-			->heighten($height);
+        list($width, $height, $option) = $this->parseStyleDimensions($style);
 
-		$image = $image->resize($dimensions);
+        $method = "resize" . ucfirst($option);
 
-		return $image;
-	}
+        if ($method == 'resizeCustom') {
+            $this->resizeCustom($file, $style->value)
+                ->save($filePath);
+        }
+        else {
+            $this->$method($file, $width, $height)
+                ->save($filePath);
+        }
 
-	/**
-	 * Resize an image and then center crop it.
-	 *
-	 * @param  UploadedFile $file
-	 * @param  string $width - The image's new width.
-	 * @param  string $height - The image's new height.
+        return $filePath;
+    }
+
+    /**
+     * parseStyleDimensions method
      *
-	 * @return \Imagine\Image
-	 */
-	protected function resizeCrop(UploadedFile $file, $width, $height)
-  	{
-		$image = $this->imagine->open($file->getRealPath());
-		list($optimalWidth, $optimalHeight) = $this->getOptimalCrop($image->getSize(), $width, $height);
-
-    	// Find center - this will be used for the crop
-		$centerX = ($optimalWidth / 2) - ($width / 2);
-    	$centerY = ($optimalHeight / 2) - ($height / 2);
-
-		return $image->resize(new Box($optimalWidth, $optimalHeight))
-			->crop(new Point($centerX, $centerY), new Box($width, $height));
-	}
-
-	/**
-	 * Resize an image to an exact width and height.
-	 *
-	 * @param  UploadedFile $file
-	 * @param  string $width - The image's new width.
-	 * @param  string $height - The image's new height.
+     * Parse the given style dimensions to extract out the file processing options,
+     * perform any necessary image resizing for a given style.
      *
-	 * @return \Imagine\Image
-	 */
-	protected function resizeExact(UploadedFile $file, $width, $height)
-	{
-		return $this->imagine
-			->open($file->getRealPath())
-			->resize(new Box($width, $height));
-	}
+     * @param  \stdClass $style
+     * @return array
+     */
+    protected function parseStyleDimensions($style)
+    {
+        if (is_callable($style->value)) {
+            return [null, null, 'custom'];
+        }
 
-	/**
-	 * Resize an image as closely as possible to a given
-	 * width and height while still maintaining aspect ratio.
-	 *
-	 * @param  UploadedFile $file
-	 * @param  string $width - The image's new width.
-	 * @param  string $height - The image's new height.
+        if (strpos($style->value, 'x') === false) {
+            // Width given, height automagically selected to preserve aspect ratio (landscape).
+            $width = $style->value;
+
+            return [$width, null, 'landscape'];
+        }
+
+        $dimensions = explode('x', $style->value);
+        $width = $dimensions[0];
+        $height = $dimensions[1];
+
+        if (empty($width)) {
+            // Height given, width automagically selected to preserve aspect ratio (portrait).
+            return [null, $height, 'portrait'];
+        }
+
+        $resizingOption = substr($height, -1, 1);
+
+        if ($resizingOption == '#') {
+            // Resize, then crop.
+            $height = rtrim($height, '#');
+
+            return [$width, $height, 'crop'];
+        }
+
+        if ($resizingOption == '!') {
+            // Resize by exact width/height (does not preserve aspect ratio).
+            $height = rtrim($height, '!');
+
+            return [$width, $height, 'exact'];
+        }
+
+        // Let the script decide the best way to resize.
+        return [$width, $height, 'auto'];
+    }
+
+    /**
+     * Resize an image as a landscape (width only)
      *
-	 * @return \Imagine\Image
-	 */
-	protected function resizeAuto(UploadedFile $file, $width, $height)
-	{
-		// Image to be resized is wider (landscape)
-		if ($height < $width) {
-			return $this->resizeLandscape($file, $width, $height);
+     * @param  UploadedFile $file
+     * @param  string       $width  - The image's new width.
+     * @param  string       $height - The image's new height.
+     * @return \stdClass
+     */
+    protected function resizeLandscape(UploadedFile $file, $width, $height)
+    {
+        $image = $this->imagine
+            ->open($file->getRealPath());
 
-		}
+        $dimensions = $image->getSize()
+            ->widen($width);
 
-		// Image to be resized is taller (portrait)
-		if ($height > $width){
-			return $this->resizePortrait($file, $width, $height);
-		}
+        $image = $image->resize($dimensions);
 
-		// Image to be resizerd is a square
-		return $this->resizeExact($file, $width, $height);
-	}
+        return $image;
+    }
 
-	/**
-	 * Resize an image using a user defined callback.
-	 *
-	 * @param  UploadedFile $file
-	 * @param  $callable
+    /**
+     * Resize an image as a portrait (height only)
      *
-	 * @return \Imagine\Image
-	 */
-	protected function resizeCustom(UploadedFile $file, $callable)
-	{
-		return call_user_func_array($callable, [$file, $this->imagine]);
-	}
+     * @param  UploadedFile $file
+     * @param  string       $width  - The image's new width.
+     * @param  string       $height - The image's new height.
+     *
+     * @return \stdClass
+     */
+    protected function resizePortrait(UploadedFile $file, $width, $height)
+    {
+        $image = $this->imagine
+            ->open($file->getRealPath());
 
-	/**
-	 * Attempts to find the best way to crop.
-	 * Takes into account the image being a portrait or landscape.
-	 *
-	 * @param  Imagine\Image\Box $size - The image's current size.
-	 * @param  string $width - The image's new width.
-	 * @param  string $height - The image's new height.
-	 * @return array
-	 */
-	protected function getOptimalCrop($size, $width, $height)
-	{
-		$heightRatio = $size->getHeight() / $height;
-		$widthRatio  = $size->getWidth() / $width;
+        $dimensions = $image->getSize()
+            ->heighten($height);
 
-		if ($heightRatio < $widthRatio) {
-			$optimalRatio = $heightRatio;
-		}
-		else {
-			$optimalRatio = $widthRatio;
-		}
+        $image = $image->resize($dimensions);
 
-		$optimalHeight = round($size->getHeight() / $optimalRatio, 2);
-		$optimalWidth  = round($size->getWidth() / $optimalRatio, 2);
+        return $image;
+    }
 
-		return [$optimalWidth, $optimalHeight];
-	}
+    /**
+     * Resize an image and then center crop it.
+     *
+     * @param  UploadedFile $file
+     * @param  string       $width  - The image's new width.
+     * @param  string       $height - The image's new height.
+     *
+     * @return \stdClass
+     */
+    protected function resizeCrop(UploadedFile $file, $width, $height)
+    {
+        $image = $this->imagine->open($file->getRealPath());
+        list($optimalWidth, $optimalHeight) = $this->getOptimalCrop($image->getSize(), $width, $height);
 
+        // Find center - this will be used for the crop
+        $centerX = ($optimalWidth / 2) - ($width / 2);
+        $centerY = ($optimalHeight / 2) - ($height / 2);
+
+        return $image->resize(new Box($optimalWidth, $optimalHeight))
+            ->crop(new Point($centerX, $centerY), new Box($width, $height));
+    }
+
+    /**
+     * Resize an image to an exact width and height.
+     *
+     * @param  UploadedFile $file
+     * @param  string       $width  - The image's new width.
+     * @param  string       $height - The image's new height.
+     *
+     * @return \stdClass
+     */
+    protected function resizeExact(UploadedFile $file, $width, $height)
+    {
+        return $this->imagine
+            ->open($file->getRealPath())
+            ->resize(new Box($width, $height));
+    }
+
+    /**
+     * Resize an image as closely as possible to a given
+     * width and height while still maintaining aspect ratio.
+     *
+     * @param  UploadedFile $file
+     * @param  string       $width  - The image's new width.
+     * @param  string       $height - The image's new height.
+     *
+     * @return \stdClass
+     */
+    protected function resizeAuto(UploadedFile $file, $width, $height)
+    {
+        // Image to be resized is wider (landscape)
+        if ($height < $width) {
+            return $this->resizeLandscape($file, $width, $height);
+
+        }
+
+        // Image to be resized is taller (portrait)
+        if ($height > $width) {
+            return $this->resizePortrait($file, $width, $height);
+        }
+
+        // Image to be resizerd is a square
+        return $this->resizeExact($file, $width, $height);
+    }
+
+    /**
+     * Resize an image using a user defined callback.
+     *
+     * @param  UploadedFile $file
+     * @param               $callable
+     *
+     * @return \stdClass
+     */
+    protected function resizeCustom(UploadedFile $file, $callable)
+    {
+        return call_user_func_array($callable, [$file, $this->imagine]);
+    }
+
+    /**
+     * Attempts to find the best way to crop.
+     * Takes into account the image being a portrait or landscape.
+     *
+     * @param  \Imagine\Image\Box $size   - The image's current size.
+     * @param  string            $width  - The image's new width.
+     * @param  string            $height - The image's new height.
+     * @return array
+     */
+    protected function getOptimalCrop($size, $width, $height)
+    {
+        $heightRatio = $size->getHeight() / $height;
+        $widthRatio = $size->getWidth() / $width;
+
+        if ($heightRatio < $widthRatio) {
+            $optimalRatio = $heightRatio;
+        }
+        else {
+            $optimalRatio = $widthRatio;
+        }
+
+        $optimalHeight = round($size->getHeight() / $optimalRatio, 2);
+        $optimalWidth = round($size->getWidth() / $optimalRatio, 2);
+
+        return [$optimalWidth, $optimalHeight];
+    }
 }

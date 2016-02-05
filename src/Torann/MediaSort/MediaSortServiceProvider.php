@@ -1,9 +1,11 @@
-<?php namespace Torann\MediaSort;
+<?php
+
+namespace Torann\MediaSort;
 
 use Illuminate\Support\ServiceProvider;
 
-class MediaSortServiceProvider extends ServiceProvider {
-
+class MediaSortServiceProvider extends ServiceProvider
+{
     /**
      * Indicates if loading of the provider is deferred.
      *
@@ -25,7 +27,9 @@ class MediaSortServiceProvider extends ServiceProvider {
      */
     public function boot()
     {
-        $this->package('torann/mediasort');
+        $this->publishes([
+            __DIR__ . '/../../config/mediasort.php' => config_path('mediasort.php'),
+        ]);
     }
 
     /**
@@ -37,7 +41,7 @@ class MediaSortServiceProvider extends ServiceProvider {
     {
         $this->mediaSortNull = sha1(time());
 
-        if (! defined('MEDIASORT_NULL')) {
+        if (!defined('MEDIASORT_NULL')) {
             define('MEDIASORT_NULL', $this->mediaSortNull);
         }
 
@@ -47,6 +51,11 @@ class MediaSortServiceProvider extends ServiceProvider {
         // Commands
         $this->registerFastenCommand();
         $this->registerRefreshCommand();
+
+        // Merge config
+        $this->mergeConfigFrom(
+            __DIR__ . '/../../config/mediasort.php', 'mediasort'
+        );
     }
 
     /**
@@ -56,9 +65,10 @@ class MediaSortServiceProvider extends ServiceProvider {
      */
     protected function registerMediaSort()
     {
-        $this->app->bind('MediaSort', function($app, $params)
+        $this->app->bind('MediaSort', function ($app, $params)
         {
-            $params['options']['connection'] = $app->config->get('graham-campbell/flysystem::default', 'local');
+            $params['options']['disk'] = $app->config->get('filesystems.default', 'local');
+
             $config = new Config($params['name'], $params['options']);
 
             return new Manager($config);
@@ -72,8 +82,7 @@ class MediaSortServiceProvider extends ServiceProvider {
      */
     protected function registerFastenCommand()
     {
-        $this->app->bind('media.fasten', function($app)
-        {
+        $this->app->bind('media.fasten', function () {
             return new Commands\FastenCommand;
         });
 
@@ -87,7 +96,7 @@ class MediaSortServiceProvider extends ServiceProvider {
      */
     protected function registerRefreshCommand()
     {
-        $this->app->bind('media.refresh', function($app)
+        $this->app->bind('media.refresh', function ()
         {
             $refreshService = new Services\ImageRefreshService();
 
@@ -104,7 +113,6 @@ class MediaSortServiceProvider extends ServiceProvider {
      */
     public function provides()
     {
-        return array();
+        return [];
     }
-
 }

@@ -1,9 +1,11 @@
-<?php namespace Torann\MediaSort\ORM;
+<?php
 
-use Exception, Config, App;
+namespace Torann\MediaSort\Eloquent;
 
-trait EloquentTrait {
+use Exception;
 
+trait HasMediaTrait
+{
     /**
      * All of the model's current file media.
      *
@@ -36,51 +38,44 @@ trait EloquentTrait {
     }
 
     /**
-     * Register eloquent save and delete event handlers.
+     * Register eloquent event handlers.
+     *
+     * We'll spin through each of the media file defined on this class
+     * and register callbacks for the events we need to observe in order to
+     * handle file uploads.
      *
      * @return void
      */
-    public static function bootMediaSort()
+    public static function bootHasMediaTrait()
     {
-        static::saved(function($instance) {
-            foreach($instance->mediaFiles as $mediaFile) {
+        static::saved(function ($instance) {
+            foreach ($instance->mediaFiles as $mediaFile) {
                 $mediaFile->afterSave($instance);
             }
         });
 
-        static::bootMediaSortDeleting();
-    }
-
-    /**
-     * Register eloquent delete event handlers for queued sorting.
-     *
-     * @return void
-     */
-    public static function bootMediaSortDeleting()
-    {
-        static::deleting(function($instance) {
-            foreach($instance->mediaFiles as $mediaFile) {
+        static::deleting(function ($instance) {
+            foreach ($instance->mediaFiles as $mediaFile) {
                 $mediaFile->beforeDelete($instance);
             }
         });
 
-        static::deleted(function($instance) {
-            foreach($instance->mediaFiles as $mediaFile) {
+        static::deleted(function ($instance) {
+            foreach ($instance->mediaFiles as $mediaFile) {
                 $mediaFile->afterDelete($instance);
             }
         });
     }
 
     /**
-     * Handle the dynamic retrieval of attachment objects.
+     * Handle the dynamic retrieval of media items.
      *
      * @param  string $key
      * @return mixed
      */
     public function getAttribute($key)
     {
-        if (array_key_exists($key, $this->mediaFiles))
-        {
+        if (array_key_exists($key, $this->mediaFiles)) {
             return $this->mediaFiles[$key];
         }
 
@@ -88,26 +83,24 @@ trait EloquentTrait {
     }
 
     /**
-     * Handle the dynamic setting of attachment objects.
+     * Handle the dynamic setting of media items.
      *
      * @param  string $key
-     * @param  mixed $value
-     * @return void
+     * @param  mixed  $value
+     * @return $this
      */
     public function setAttribute($key, $value)
     {
-        if (array_key_exists($key, $this->mediaFiles))
-        {
-            if ($value)
-            {
+        if (array_key_exists($key, $this->mediaFiles)) {
+            if ($value) {
                 $mediaFile = $this->mediaFiles[$key];
                 $mediaFile->setUploadedFile($value, $key);
             }
 
-            return;
+            return $this;
         }
 
-        parent::setAttribute($key, $value);
+        return parent::setAttribute($key, $value);
     }
 
     /**
@@ -115,7 +108,7 @@ trait EloquentTrait {
      * and add the media to the list of media to be processed during saving.
      *
      * @param  string $name
-     * @param  array $options
+     * @param  array  $options
      *
      * @return mixed
      * @throws Exception
@@ -124,12 +117,11 @@ trait EloquentTrait {
     {
         $options = $this->mergeOptions($options);
 
-        if (preg_match("/:id\b/", $options['url']) !== 1)
-        {
+        if (strpos($options['url'], '{id}') === false) {
             throw new Exception('Invalid Url: an id interpolation is required.', 1);
         }
 
-        $media = App::make('MediaSort', ['name' => $name, 'options' => $options]);
+        $media = app('MediaSort', ['name' => $name, 'options' => $options]);
         $media->setInstance($this);
         $this->mediaFiles[$name] = $media;
     }
@@ -145,11 +137,10 @@ trait EloquentTrait {
      */
     protected function mergeOptions($options)
     {
-        $defaultOptions = Config::get('mediasort::config', array());
-        $options = array_merge($defaultOptions, (array) $options);
-        $options['styles'] = array_merge((array) $options['styles'], ['original' => '']);
+        $defaultOptions = config('mediasort', []);
+        $options = array_merge($defaultOptions, (array)$options);
+        $options['styles'] = array_merge((array)$options['styles'], ['original' => '']);
 
         return $options;
     }
-
 }

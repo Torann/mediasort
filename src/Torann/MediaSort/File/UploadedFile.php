@@ -1,6 +1,9 @@
-<?php namespace Torann\MediaSort\File;
+<?php
 
-class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile {
+namespace Torann\MediaSort\File;
+
+class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
+{
 
     /**
      * An array of key value pairs for valid image
@@ -9,14 +12,14 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile {
      * @var array
      */
     protected $imageMimes = [
-        'bmp'   => 'image/bmp',
-        'gif'   => 'image/gif',
-        'jpeg'  => array('image/jpeg', 'image/pjpeg'),
-        'jpg'   => array('image/jpeg', 'image/pjpeg'),
-        'jpe'   => array('image/jpeg', 'image/pjpeg'),
-        'png'   => 'image/png',
-        'tiff'  => 'image/tiff',
-        'tif'   => 'image/tiff',
+        'bmp' => 'image/bmp',
+        'gif' => 'image/gif',
+        'jpeg' => ['image/jpeg', 'image/pjpeg'],
+        'jpg' => ['image/jpeg', 'image/pjpeg'],
+        'jpe' => ['image/jpeg', 'image/pjpeg'],
+        'png' => 'image/png',
+        'tiff' => 'image/tiff',
+        'tif' => 'image/tiff',
     ];
 
     /**
@@ -31,10 +34,8 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile {
         // The $imageMimes property contains an array of file extensions and
         // their associated MIME types. We will loop through them and look for
         // the MIME type of the current UploadedFile.
-        foreach ($this->imageMimes as $imageMime)
-        {
-            if (in_array($mime, (array) $imageMime))
-            {
+        foreach ($this->imageMimes as $imageMime) {
+            if (in_array($mime, (array)$imageMime)) {
                 return true;
             }
         }
@@ -45,7 +46,7 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile {
     /**
      * Returns an informative upload error message.
      *
-     * @param  int    $code
+     * @param  int $code
      * @return string
      */
     public function getErrorMessage($code = null)
@@ -53,13 +54,13 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile {
         $code = $code ?: $this->$code;
 
         static $errors = [
-            UPLOAD_ERR_INI_SIZE   => 'The file "%s" exceeds your upload_max_filesize ini directive (limit is %d kb).',
-            UPLOAD_ERR_FORM_SIZE  => 'The file "%s" exceeds the upload limit defined in your form.',
-            UPLOAD_ERR_PARTIAL    => 'The file "%s" was only partially uploaded.',
-            UPLOAD_ERR_NO_FILE    => 'No file was uploaded.',
+            UPLOAD_ERR_INI_SIZE => 'The file "%s" exceeds your upload_max_filesize ini directive (limit is %d kb).',
+            UPLOAD_ERR_FORM_SIZE => 'The file "%s" exceeds the upload limit defined in your form.',
+            UPLOAD_ERR_PARTIAL => 'The file "%s" was only partially uploaded.',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
             UPLOAD_ERR_CANT_WRITE => 'The file "%s" could not be written on disk.',
             UPLOAD_ERR_NO_TMP_DIR => 'File could not be uploaded: missing temporary directory.',
-            UPLOAD_ERR_EXTENSION  => 'File upload was stopped by a php extension.',
+            UPLOAD_ERR_EXTENSION => 'File upload was stopped by a php extension.',
         ];
 
         $maxFilesize = $code === UPLOAD_ERR_INI_SIZE ? self::getMaxFilesize() / 1024 : 0;
@@ -67,5 +68,4 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile {
 
         return sprintf($message, $this->getClientOriginalName(), $maxFilesize);
     }
-
 }
