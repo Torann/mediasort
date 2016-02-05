@@ -11,6 +11,10 @@ MediaSort upload manager using Laravel 5's builtin Filesystem / Cloud Storage. S
 
 Documentation for the framework can be found on [Lyften.com](http://lyften.com/projects/mediasort/).
 
+## Laravel 4
+
+For Laravel 4 Installation see []version 0.1](https://github.com/Torann/mediasort/tree/0.1);
+
 ### License
 
 MediaSort is open-sourced software licensed under the BSD 2-Clause License.
