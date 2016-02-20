@@ -79,7 +79,7 @@ class Manager
     function __construct(Config $config)
     {
         $this->config = $config;
-        $this->resizer = new Resizer($this->config->image_processor);
+        $this->resizer = new Resizer($this->config->image_processor, $this->config->image_quality);
         $this->fileManager = new FileManager($this);
         $this->interpolator = new Interpolator($this);
 
@@ -103,6 +103,7 @@ class Manager
      * Style options will be converted into a php stcClass.
      *
      * @param  string $optionName
+     *
      * @return mixed
      */
     public function __get($optionName)
@@ -115,6 +116,7 @@ class Manager
      *
      * @param  mixed  $uploadedFile
      * @param  string $styleName
+     *
      * @return void
      */
     public function setUploadedFile($uploadedFile, $styleName)
@@ -180,6 +182,7 @@ class Manager
      * corresponding model instance it's attached to.
      *
      * @param  Model $instance
+     *
      * @return void
      */
     public function setInstance($instance)
@@ -201,6 +204,7 @@ class Manager
      * Mutator method for the config property.
      *
      * @param  \Torann\MediaSort\Config $config
+     *
      * @return void
      */
     public function setConfig($config)
@@ -255,6 +259,7 @@ class Manager
      * Generates the url to a file upload.
      *
      * @param string $styleName
+     *
      * @return string
      */
     public function url($styleName = '')
@@ -282,6 +287,7 @@ class Manager
      * Generates the filesystem path to an uploaded file.
      *
      * @param string $styleName
+     *
      * @return string
      */
     public function path($styleName = '')
@@ -330,6 +336,7 @@ class Manager
      * Process the write queue.
      *
      * @param  Eloquent $instance
+     *
      * @return void
      */
     public function afterSave($instance)
@@ -342,6 +349,7 @@ class Manager
      * Queue up this attachments files for deletion.
      *
      * @param  Eloquent $instance
+     *
      * @return void
      */
     public function beforeDelete($instance)
@@ -354,6 +362,7 @@ class Manager
      * Process the delete queue.
      *
      * @param  Eloquent $instance
+     *
      * @return void
      */
     public function afterDelete($instance)
@@ -367,6 +376,7 @@ class Manager
      * MEDIASORT_NULL to the attachment and then saving.
      *
      * @param  array $stylesToClear
+     *
      * @return void
      */
     public function destroy($stylesToClear = [])
@@ -380,14 +390,14 @@ class Manager
      * MEDIASORT_NULL to the attachment.  Does not save the associated model.
      *
      * @param  array $stylesToClear
+     *
      * @return void
      */
     public function clear($stylesToClear = [])
     {
         if ($stylesToClear) {
             $this->queueSomeForDeletion($stylesToClear);
-        }
-        else {
+        } else {
             $this->queueAllForDeletion();
         }
     }
@@ -418,8 +428,7 @@ class Manager
             return;
         }
 
-        foreach ($this->styles as $style)
-        {
+        foreach ($this->styles as $style) {
             if (!$file = $this->path($style->name)) {
                 continue;
             }
@@ -428,8 +437,7 @@ class Manager
 
             if ($style->value && $file->isImage()) {
                 $file = $this->resizer->resize($file, $style);
-            }
-            else {
+            } else {
                 $file = $file->getRealPath();
             }
 
@@ -444,6 +452,7 @@ class Manager
      *
      * @param  Eloquent $instance
      * @param  string   $queue_path
+     *
      * @return void
      */
     public function processQueue($instance, $queue_path)
@@ -478,12 +487,10 @@ class Manager
      */
     protected function flushWrites()
     {
-        foreach ($this->queuedForWrite as $style)
-        {
+        foreach ($this->queuedForWrite as $style) {
             if ($style->value && $this->uploadedFile->isImage()) {
                 $file = $this->resizer->resize($this->uploadedFile, $style);
-            }
-            else {
+            } else {
                 $file = $this->uploadedFile->getRealPath();
             }
 
@@ -511,12 +518,12 @@ class Manager
      * Generates the default url if no file attachment is present.
      *
      * @param string $styleName
+     *
      * @return string
      */
     protected function defaultUrl($styleName = '')
     {
-        if ($this->default_url)
-        {
+        if ($this->default_url) {
             $url = $this->interpolator->interpolate($this->default_url, $styleName);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
@@ -540,6 +547,7 @@ class Manager
      * to the queuedForDeletion queue.
      *
      * @param  array $stylesToClear
+     *
      * @return void
      */
     protected function queueSomeForDeletion($stylesToClear)
@@ -562,8 +570,7 @@ class Manager
             return;
         }
 
-        if (!$this->preserve_files)
-        {
+        if (!$this->preserve_files) {
             $filePaths = array_map(function ($style) {
                 return $this->path($style->name);
             }, $this->styles);
@@ -582,6 +589,7 @@ class Manager
      *
      * @param  string $property
      * @param  mixed  $value
+     *
      * @return void
      */
     protected function instanceWrite($property, $value)
@@ -590,8 +598,7 @@ class Manager
 
         if ($property === 'file_name') {
             $this->instance->setAttribute($fieldName, $value);
-        }
-        else {
+        } else {
             if (array_key_exists($fieldName, $this->instance['fillable'])) {
                 $this->instance->setAttribute($fieldName, $value);
             }

@@ -17,19 +17,28 @@ class Resizer
     protected $imagine;
 
     /**
+     * Quality of the saved image.
+     *
+     * @var int
+     */
+    protected $quality;
+
+    /**
      * Constructor method
      *
      * @param  string $image_processor
+     * @param  int    $quality
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    function __construct($image_processor)
+    function __construct($image_processor, $quality = 90)
     {
         if (!class_exists($image_processor)) {
             throw new InvalidClassException('Image processor not found.');
         }
 
         $this->imagine = new $image_processor;
+        $this->quality = $quality;
     }
 
     /**
@@ -49,11 +58,11 @@ class Resizer
 
         if ($method == 'resizeCustom') {
             $this->resizeCustom($file, $style->value)
-                ->save($filePath);
+                ->save($filePath, ['quality' => $this->quality]);
         }
         else {
             $this->$method($file, $width, $height)
-                ->save($filePath);
+                ->save($filePath, ['quality' => $this->quality]);
         }
 
         return $filePath;
@@ -75,7 +84,7 @@ class Resizer
         }
 
         if (strpos($style->value, 'x') === false) {
-            // Width given, height automagically selected to preserve aspect ratio (landscape).
+            // Width given, height automatically selected to preserve aspect ratio (landscape).
             $width = $style->value;
 
             return [$width, null, 'landscape'];
