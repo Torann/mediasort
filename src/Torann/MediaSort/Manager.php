@@ -274,6 +274,22 @@ class Manager
     }
 
     /**
+     * Generates an array of all style urls.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        $urls = [];
+
+        foreach($this->styles as $style) {
+            $urls[$style->name] = $this->url($style->name);
+        }
+
+        return $urls;
+    }
+
+    /**
      * Determine if object has media.
      *
      * @return bool
