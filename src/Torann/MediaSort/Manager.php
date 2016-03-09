@@ -270,16 +270,11 @@ class Manager
     {
         if ($this->originalFilename()) {
             if ($path = $this->path($styleName)) {
-                $url = $this->prefix_url . $path;
-
-                return function_exists('asset') ? asset($url) : $url;
+                return url($this->prefix_url . $path);
             }
         }
 
-        // Return default URL
-        $url = $this->defaultUrl($styleName);
-
-        return function_exists('asset') ? asset($url) : $url;
+        return url($this->defaultUrl($styleName));
     }
 
     /**
