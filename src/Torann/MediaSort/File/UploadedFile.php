@@ -4,7 +4,6 @@ namespace Torann\MediaSort\File;
 
 class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
 {
-
     /**
      * An array of key value pairs for valid image
      * extensions and their associated MIME types.
@@ -47,6 +46,7 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
      * Returns an informative upload error message.
      *
      * @param  int $code
+     *
      * @return string
      */
     public function getErrorMessage($code = null)

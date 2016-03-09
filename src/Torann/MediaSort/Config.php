@@ -46,12 +46,12 @@ class Config
      * Style options will be converted into a php stcClass.
      *
      * @param  string $optionName
+     *
      * @return mixed
      */
     public function __get($optionName)
     {
-        if (array_key_exists($optionName, $this->options))
-        {
+        if (array_key_exists($optionName, $this->options)) {
             if ($optionName == 'styles') {
                 return $this->convertToObject($this->options[$optionName]);
             }
@@ -68,14 +68,14 @@ class Config
      * Both array keys and array values will be conveted to object properties.
      *
      * @param  mixed $arrayElements
+     *
      * @return mixed
      */
     protected function convertToObject($arrayElements)
     {
         $objects = [];
 
-        foreach ($arrayElements as $key => $value)
-        {
+        foreach ($arrayElements as $key => $value) {
             $object = new \stdClass();
             $object->name = $key;
             $object->value = $value;

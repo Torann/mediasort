@@ -29,6 +29,7 @@ trait HasMediaTrait
      *
      * @param  string $name
      * @param  array  $options
+     *
      * @return void
      */
     public function hasMediaFile($name, array $options = [])
@@ -71,6 +72,7 @@ trait HasMediaTrait
      * Handle the dynamic retrieval of media items.
      *
      * @param  string $key
+     *
      * @return mixed
      */
     public function getAttribute($key)
@@ -87,6 +89,7 @@ trait HasMediaTrait
      *
      * @param  string $key
      * @param  mixed  $value
+     *
      * @return $this
      */
     public function setAttribute($key, $value)
@@ -133,6 +136,7 @@ trait HasMediaTrait
      * Finally we'll merge in media specific options on top of that.
      *
      * @param  array $options
+     *
      * @return array
      */
     protected function mergeOptions($options)

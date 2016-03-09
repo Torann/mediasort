@@ -9,6 +9,7 @@ class Validator
      * A url is required to have either an {id} or an {id_partition} interpolation.
      *
      * @param  array $options
+     *
      * @return void
      */
     public function validateOptions($options)
@@ -21,14 +22,17 @@ class Validator
      * driver is set to 'filesystem'.
      *
      * @param  array $options
+     *
      * @return void
      *
      * @throws Exceptions\InvalidUrlOptionException
      */
     protected function validateFilesystemOptions($options)
     {
-        if (strpos($options['url'], '{id}') === false && strpos($options['url'], '{id_partition}') === false
-            && strpos($options['url'], '{hash}') === false) {
+        if (strpos($options['url'], '{id}') === false
+            && strpos($options['url'], '{id_partition}') === false
+            && strpos($options['url'], '{hash}') === false
+        ) {
             throw new Exceptions\InvalidUrlOptionException('Invalid Url: an id, id_partition, or hash interpolation is required.',
                 1);
         }
@@ -39,6 +43,7 @@ class Validator
      * driver is set to 's3'.
      *
      * @param  array $options
+     *
      * @return void
      *
      * @throws Exceptions\InvalidUrlOptionException

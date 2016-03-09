@@ -45,7 +45,8 @@ class Resizer
      * Resize an image using the computed settings.
      *
      * @param  \Torann\MediaSort\File\UploadedFile $file
-     * @param  \stdClass                            $style
+     * @param  \stdClass                           $style
+     *
      * @return string
      */
     public function resize(UploadedFile $file, $style)
@@ -75,6 +76,7 @@ class Resizer
      * perform any necessary image resizing for a given style.
      *
      * @param  \stdClass $style
+     *
      * @return array
      */
     protected function parseStyleDimensions($style)
@@ -125,6 +127,7 @@ class Resizer
      * @param  UploadedFile $file
      * @param  string       $width  - The image's new width.
      * @param  string       $height - The image's new height.
+     *
      * @return \stdClass
      */
     protected function resizeLandscape(UploadedFile $file, $width, $height)
@@ -245,8 +248,9 @@ class Resizer
      * Takes into account the image being a portrait or landscape.
      *
      * @param  \Imagine\Image\Box $size   - The image's current size.
-     * @param  string            $width  - The image's new width.
-     * @param  string            $height - The image's new height.
+     * @param  string             $width  - The image's new width.
+     * @param  string             $height - The image's new height.
+     *
      * @return array
      */
     protected function getOptimalCrop($size, $width, $height)

@@ -2,8 +2,6 @@
 
 namespace Torann\MediaSort\Disks;
 
-use Storage;
-
 class Local extends AbstractDisk
 {
     /*
@@ -31,6 +29,7 @@ class Local extends AbstractDisk
      *
      * @param  string $source
      * @param  string $target
+     *
      * @return void
      */
     public function move($source, $target)
@@ -53,7 +52,7 @@ class Local extends AbstractDisk
                 ->interpolate($this->media->local_root);
 
             // Set path
-            Storage::getDriver()
+            $this->filesystem->getDriver()
                 ->getAdapter()
                 ->setPathPrefix($this->root);
         }

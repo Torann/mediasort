@@ -24,6 +24,7 @@ interface MediaSortInterface
      * Handle the dynamic retrieval of attachment objects.
      *
      * @param  string $key
+     *
      * @return mixed
      */
     public function getAttribute($key);

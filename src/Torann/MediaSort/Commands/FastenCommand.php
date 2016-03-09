@@ -2,7 +2,6 @@
 
 namespace Torann\MediaSort\Commands;
 
-use File, Str;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputArgument;
 
@@ -72,22 +71,21 @@ class FastenCommand extends Command
     {
         $data = ['table' => $this->argument('table'), 'attachment' => $this->argument('attachment')];
         $prefix = date('Y_m_d_His');
-        $path = app_path() . '/database/migrations';
+        $path = base_path('/database/migrations');
 
         if (!is_dir($path)) {
             mkdir($path);
         }
 
         $fileName = $path . '/' . $prefix . '_add_' . $data['attachment'] . '_fields_to_' . $data['table'] . '_table.php';
-        $data['className'] = 'Add' . ucfirst($data['attachment']) . 'FieldsTo' . ucfirst(Str::camel($data['table'])) . 'Table';
+        $data['className'] = 'Add' . ucfirst($data['attachment']) . 'FieldsTo' . ucfirst(camel_case($data['table'])) . 'Table';
 
         // Save the new migration to disk using the MediaSort migration view.
         $migration = view('mediasort::migration', $data)->render();
 
-        File::put($fileName, $migration);
+        file_put_contents($fileName, $migration);
 
         // Print a created migration message to the console.
         $this->info("Created migration: $fileName");
     }
-
 }

@@ -2,7 +2,9 @@
 
 namespace Torann\MediaSort;
 
+use Illuminate\Database\Eloquent\Model;
 use Torann\MediaSort\File\Image\Resizer;
+use Illuminate\Filesystem\FilesystemManager;
 use Torann\MediaSort\Exceptions\InvalidClassException;
 
 class Manager
@@ -74,9 +76,10 @@ class Manager
     /**
      * Constructor method
      *
-     * @param \Torann\MediaSort\Config $config
+     * @param Config            $config
+     * @param FilesystemManager $filesystem
      */
-    function __construct(Config $config)
+    function __construct(Config $config, FilesystemManager $filesystem)
     {
         $this->config = $config;
         $this->resizer = new Resizer($this->config->image_processor, $this->config->image_quality);
@@ -84,7 +87,7 @@ class Manager
         $this->interpolator = new Interpolator($this);
 
         // Set disk
-        $this->setDisk($this->config->disk);
+        $this->setDisk($this->config->disk, $filesystem);
     }
 
     /**
@@ -140,11 +143,12 @@ class Manager
     /**
      * Set disk property.
      *
-     * @param  string $diskName
+     * @param  string            $diskName
+     * @param  FilesystemManager $filesystem
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    public function setDisk($diskName)
+    public function setDisk($diskName, FilesystemManager $filesystem)
     {
         $diskName = ucfirst($diskName);
         $class = "\\Torann\\MediaSort\\Disks\\{$diskName}";
@@ -153,7 +157,7 @@ class Manager
             throw new InvalidClassException("Disk type \"{$diskName}\" not found.");
         }
 
-        $this->disk = new $class($this);
+        $this->disk = new $class($this, $filesystem);
     }
 
     /**
@@ -265,24 +269,36 @@ class Manager
     public function url($styleName = '')
     {
         if ($this->originalFilename()) {
-            if ($url = $this->path($styleName)) {
-                return asset($this->prefix_url . $url);
+            if ($path = $this->path($styleName)) {
+                $url = $this->prefix_url . $path;
+
+                return function_exists('asset') ? asset($url) : $url;
             }
         }
 
-        return asset($this->defaultUrl($styleName));
+        // Return default URL
+        $url = $this->defaultUrl($styleName);
+
+        return function_exists('asset') ? asset($url) : $url;
     }
 
     /**
      * Generates an array of all style urls.
      *
+     * @param bool $skipEmpty
+     *
      * @return array
      */
-    public function toArray()
+    public function toArray($skipEmpty = false)
     {
+        // Skip when no media
+        if ($skipEmpty === true && $this->hasMedia() === false) {
+            return null;
+        }
+
         $urls = [];
 
-        foreach($this->styles as $style) {
+        foreach ($this->styles as $style) {
             $urls[$style->name] = $this->url($style->name);
         }
 
@@ -351,7 +367,7 @@ class Manager
     /**
      * Process the write queue.
      *
-     * @param  Eloquent $instance
+     * @param  Model $instance
      *
      * @return void
      */
@@ -364,7 +380,7 @@ class Manager
     /**
      * Queue up this attachments files for deletion.
      *
-     * @param  Eloquent $instance
+     * @param  Model $instance
      *
      * @return void
      */
@@ -377,7 +393,7 @@ class Manager
     /**
      * Process the delete queue.
      *
-     * @param  Eloquent $instance
+     * @param  Model $instance
      *
      * @return void
      */
@@ -413,7 +429,8 @@ class Manager
     {
         if ($stylesToClear) {
             $this->queueSomeForDeletion($stylesToClear);
-        } else {
+        }
+        else {
             $this->queueAllForDeletion();
         }
     }
@@ -453,7 +470,8 @@ class Manager
 
             if ($style->value && $file->isImage()) {
                 $file = $this->resizer->resize($file, $style);
-            } else {
+            }
+            else {
                 $file = $file->getRealPath();
             }
 
@@ -466,8 +484,8 @@ class Manager
      * Used to manually trigger a processing. Helpful
      * for delayed upload of large files.
      *
-     * @param  Eloquent $instance
-     * @param  string   $queue_path
+     * @param  Model  $instance
+     * @param  string $queue_path
      *
      * @return void
      */
@@ -506,7 +524,8 @@ class Manager
         foreach ($this->queuedForWrite as $style) {
             if ($style->value && $this->uploadedFile->isImage()) {
                 $file = $this->resizer->resize($this->uploadedFile, $style);
-            } else {
+            }
+            else {
                 $file = $this->uploadedFile->getRealPath();
             }
 
@@ -614,7 +633,8 @@ class Manager
 
         if ($property === 'file_name') {
             $this->instance->setAttribute($fieldName, $value);
-        } else {
+        }
+        else {
             if (array_key_exists($fieldName, $this->instance['fillable'])) {
                 $this->instance->setAttribute($fieldName, $value);
             }

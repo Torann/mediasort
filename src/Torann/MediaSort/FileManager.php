@@ -29,6 +29,7 @@ class FileManager
      * Build an UploadedFile object using various file input types.
      *
      * @param  mixed $file
+     *
      * @return \Torann\MediaSort\File\UploadedFile
      */
     public function make($file)
@@ -38,7 +39,12 @@ class FileManager
         }
 
         if (is_array($file)) {
-            return $this->createFromArray($file);
+            if (isset($file['base64']) && isset($file['name'])) {
+                return $this->createFromBase64($file['name'], $file['base64']);
+            }
+            else {
+                return $this->createFromArray($file);
+            }
         }
 
         if (array_key_exists('scheme', parse_url($file))) {
@@ -53,6 +59,7 @@ class FileManager
      * a Symfony\Component\HttpFoundation\File\UploadedFile object.
      *
      * @param  \Symfony\Component\HttpFoundation\File\UploadedFile $file
+     *
      * @return \Torann\MediaSort\File\UploadedFile
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
@@ -74,10 +81,36 @@ class FileManager
     }
 
     /**
+     * Build a Torann\MediaSort\File\UploadedFile object from a
+     * base64 encoded image array. Usually from an API request.
+     *
+     * @param  array $filename
+     * @param  array $data
+     *
+     * @return \Torann\MediaSort\File\UploadedFile
+     */
+    protected function createFromBase64($filename, $data)
+    {
+        // Get temporary destination
+        $destination = sys_get_temp_dir() . '/' . str_random(4) . '-' . $filename;
+
+        // Create destination if not already there
+        if (is_dir(dirname($destination)) === false) {
+            mkdir(dirname($destination), 0755, true);
+        }
+
+        // Create temporary file
+        file_put_contents($destination, base64_decode($data), 0);
+
+        return new UploadedFile($destination, $filename);
+    }
+
+    /**
      * Build a Torann\MediaSort\File\UploadedFile object from the
      * raw php $_FILES array date.
      *
      * @param  array $file
+     *
      * @return \Torann\MediaSort\File\UploadedFile
      */
     protected function createFromArray($file)
@@ -90,6 +123,7 @@ class FileManager
      * an instance of Torann\MediaSort\File\UploadedFile.
      *
      * @param  string $file
+     *
      * @return \Torann\MediaSort\File\UploadedFile
      */
     protected function createFromUrl($file)
@@ -127,6 +161,7 @@ class FileManager
      * an instance of Torann\MediaSort\File\UploadedFile.
      *
      * @param  string $file
+     *
      * @return \Torann\MediaSort\File\UploadedFile
      */
     protected function createFromString($file)

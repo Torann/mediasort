@@ -27,9 +27,15 @@ class MediaSortServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->publishes([
-            __DIR__ . '/../../config/mediasort.php' => config_path('mediasort.php'),
-        ]);
+        if ($this->isLumen() === false) {
+            $this->publishes([
+                __DIR__ . '/../../config/mediasort.php' => config_path('mediasort.php'),
+            ]);
+
+            $this->mergeConfigFrom(
+                __DIR__ . '/../../config/mediasort.php', 'mediasort'
+            );
+        }
     }
 
     /**
@@ -51,11 +57,6 @@ class MediaSortServiceProvider extends ServiceProvider
         // Commands
         $this->registerFastenCommand();
         $this->registerRefreshCommand();
-
-        // Merge config
-        $this->mergeConfigFrom(
-            __DIR__ . '/../../config/mediasort.php', 'mediasort'
-        );
     }
 
     /**
@@ -65,13 +66,12 @@ class MediaSortServiceProvider extends ServiceProvider
      */
     protected function registerMediaSort()
     {
-        $this->app->bind('MediaSort', function ($app, $params)
-        {
+        $this->app->bind('MediaSort', function ($app, $params) {
             $params['options']['disk'] = $app->config->get('filesystems.default', 'local');
 
             $config = new Config($params['name'], $params['options']);
 
-            return new Manager($config);
+            return new Manager($config, $app['filesystem']);
         });
     }
 
@@ -96,14 +96,23 @@ class MediaSortServiceProvider extends ServiceProvider
      */
     protected function registerRefreshCommand()
     {
-        $this->app->bind('media.refresh', function ()
-        {
+        $this->app->bind('media.refresh', function () {
             $refreshService = new Services\ImageRefreshService();
 
             return new Commands\RefreshCommand($refreshService);
         });
 
         $this->commands('media.refresh');
+    }
+
+    /**
+     * Check if package is running under Lumen app
+     *
+     * @return bool
+     */
+    protected function isLumen()
+    {
+        return str_contains($this->app->version(), 'Lumen') === true;
     }
 
     /**
