@@ -102,7 +102,10 @@ class FileManager
         // Create temporary file
         file_put_contents($destination, base64_decode($data), 0);
 
-        return new UploadedFile($destination, $filename);
+        // Get mime type
+        $mimeType = mime_content_type($destination);
+
+        return new UploadedFile($destination, $filename, $mimeType);
     }
 
     /**
