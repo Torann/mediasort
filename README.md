@@ -9,7 +9,7 @@ MediaSort upload manager using Laravel 5's builtin Filesystem / Cloud Storage. S
 
 ## Official Documentation
 
-Documentation for the framework can be found on [Lyften.com](http://lyften.com/projects/mediasort/).
+Documentation for the package can be found on [Lyften.com](http://lyften.com/projects/mediasort/).
 
 ## Laravel 4
 
