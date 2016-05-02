@@ -270,11 +270,11 @@ class Manager
     {
         if ($this->originalFilename()) {
             if ($path = $this->path($styleName)) {
-                return url($this->prefix_url . $path);
+                return $this->prefix_url . $path;
             }
         }
 
-        return url($this->defaultUrl($styleName));
+        return $this->defaultUrl($styleName);
     }
 
     /**
