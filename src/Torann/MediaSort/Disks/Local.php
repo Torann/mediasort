@@ -2,41 +2,27 @@
 
 namespace Torann\MediaSort\Disks;
 
+use Torann\MediaSort\Manager;
+use Illuminate\Filesystem\FilesystemManager;
+
 class Local extends AbstractDisk
 {
-    /*
-     * Used to determine if the path
-     * has already been updated.
-     *
-     * @var string
-     */
-    private $root;
-
     /**
-     * Remove an attached file.
+     * Constructor method
      *
-     * @param array $files
+     * @param Manager           $media
+     * @param FilesystemManager $filesystem
      */
-    public function remove($files)
+    function __construct(Manager $media, FilesystemManager $filesystem)
     {
+        parent::__construct($media, $filesystem);
+
+        // Create a new instance of the local driver. Doing this will prevent
+        // any setting changes made here from affecting the whole application.
+        $this->filesystem = $filesystem->createLocalDriver($this->config);
+
+        // Change the prefix of the local storage
         $this->setPathPrefix();
-
-        parent::remove($files);
-    }
-
-    /**
-     * Move an uploaded file to it's intended target.
-     *
-     * @param  string $source
-     * @param  string $target
-     *
-     * @return void
-     */
-    public function move($source, $target)
-    {
-        $this->setPathPrefix();
-
-        parent::move($source, $target);
     }
 
     /**
@@ -46,15 +32,15 @@ class Local extends AbstractDisk
      */
     protected function setPathPrefix()
     {
-        if ($this->media->local_root && !$this->root) {
+        if ($this->media->local_root) {
             // Interpolate path
-            $this->root = $this->media->getInterpolator()
+            $root = $this->media->getInterpolator()
                 ->interpolate($this->media->local_root);
 
             // Set path
             $this->filesystem->getDriver()
                 ->getAdapter()
-                ->setPathPrefix($this->root);
+                ->setPathPrefix($root);
         }
     }
 }
