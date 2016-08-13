@@ -141,9 +141,8 @@ class FileManager
         $filePath = tempnam(sys_get_temp_dir(), 'STP');
         file_put_contents($filePath, $rawFile);
 
-        // Get the original name of the file and sanitize it
-        $name = strtolower(urldecode(pathinfo($file)['basename']));
-        $name = preg_replace('/[^A-Za-z0-9\-_\.]/', '', $name);
+        // Get the original filename
+        $name = pathinfo($file)['basename'];
 
         // Get the mime type of the file
         $sizeInfo = getimagesizefromstring($rawFile);

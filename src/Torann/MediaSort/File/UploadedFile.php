@@ -68,4 +68,25 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
 
         return sprintf($message, $this->getClientOriginalName(), $maxFilesize);
     }
+
+    /**
+     * Returns locale independent base name of the given path.
+     *
+     * @param string $name The new file name
+     *
+     * @return string containing
+     */
+    protected function getName($name)
+    {
+        $name = parent::getName($name);
+
+        // Replace spaces with a dash
+        $name = preg_replace('!\s+!', '-', $name);
+
+        // This fixes any URL encoded filename and sanitize it
+        $name = strtolower(urldecode($name));
+        $name = preg_replace('/[^A-Za-z0-9\-_\.]/', '', $name);
+
+        return $name;
+    }
 }
