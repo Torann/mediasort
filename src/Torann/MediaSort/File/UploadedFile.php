@@ -80,13 +80,13 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
     {
         $name = parent::getName($name);
 
+        // This fixes any URL encoded filename and sanitize it
+        $name = strtolower(urldecode($name));
+
         // Replace spaces with a dash
         $name = preg_replace('!\s+!', '-', $name);
 
-        // This fixes any URL encoded filename and sanitize it
-        $name = strtolower(urldecode($name));
-        $name = preg_replace('/[^A-Za-z0-9\-_\.]/', '', $name);
-
-        return $name;
+        // Remove odd characters
+        return preg_replace('/[^A-Za-z0-9\-_\.]/', '', $name);
     }
 }
