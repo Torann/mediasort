@@ -45,9 +45,9 @@ abstract class AbstractDisk
         foreach ($files as $file) {
             try {
                 $this->filesystem->delete($file);
-            } // Ignore not found exceptions
-            catch (Exception $e) {
             }
+            // Ignore not found exceptions
+            catch (Exception $e) {}
         }
     }
 
