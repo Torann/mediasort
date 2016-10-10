@@ -6,5 +6,5 @@ use Exception;
 
 class InvalidClassException extends Exception
 {
-
+    //
 }

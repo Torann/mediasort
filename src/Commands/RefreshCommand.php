@@ -34,7 +34,7 @@ class RefreshCommand extends Command
     /**
      * Create a new command instance.
      *
-     * @param  ImageRefreshService $imageRefreshService
+     * @param ImageRefreshService $imageRefreshService
      */
     public function __construct(ImageRefreshService $imageRefreshService)
     {

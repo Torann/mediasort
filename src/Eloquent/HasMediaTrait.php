@@ -27,8 +27,8 @@ trait HasMediaTrait
      * Add a new file media type to the list of available media.
      * This function acts as a quasi constructor for this trait.
      *
-     * @param  string $name
-     * @param  array  $options
+     * @param string $name
+     * @param array  $options
      *
      * @return void
      */
@@ -56,14 +56,18 @@ trait HasMediaTrait
         });
 
         static::deleting(function ($instance) {
-            foreach ($instance->mediaFiles as $mediaFile) {
-                $mediaFile->beforeDelete($instance);
+            if ($instance->canDeleteMedia()) {
+                foreach ($instance->mediaFiles as $mediaFile) {
+                    $mediaFile->beforeDelete($instance);
+                }
             }
         });
 
         static::deleted(function ($instance) {
-            foreach ($instance->mediaFiles as $mediaFile) {
-                $mediaFile->afterDelete($instance);
+            if ($instance->canDeleteMedia()) {
+                foreach ($instance->mediaFiles as $mediaFile) {
+                    $mediaFile->afterDelete($instance);
+                }
             }
         });
     }
@@ -71,7 +75,7 @@ trait HasMediaTrait
     /**
      * Handle the dynamic retrieval of media items.
      *
-     * @param  string $key
+     * @param string $key
      *
      * @return mixed
      */
@@ -87,8 +91,8 @@ trait HasMediaTrait
     /**
      * Handle the dynamic setting of media items.
      *
-     * @param  string $key
-     * @param  mixed  $value
+     * @param string $key
+     * @param mixed  $value
      *
      * @return $this
      */
@@ -110,8 +114,8 @@ trait HasMediaTrait
      * Register an media type.
      * and add the media to the list of media to be processed during saving.
      *
-     * @param  string $name
-     * @param  array  $options
+     * @param string $name
+     * @param array  $options
      *
      * @return mixed
      * @throws Exception
@@ -124,18 +128,20 @@ trait HasMediaTrait
             throw new Exception('Invalid Url: an id interpolation is required.', 1);
         }
 
-        $media = app('MediaSort', ['name' => $name, 'options' => $options]);
+        $media = app('mediasort', ['name' => $name, 'options' => $options]);
         $media->setInstance($this);
+
         $this->mediaFiles[$name] = $media;
     }
 
     /**
      * Merge configuration options.
+     *
      * Here we'll merge user defined options with the MediaSort defaults in a cascading manner.
      * We start with overall MediaSort options.  Next we merge in storage driver specific options.
      * Finally we'll merge in media specific options on top of that.
      *
-     * @param  array $options
+     * @param array $options
      *
      * @return array
      */
@@ -146,5 +152,20 @@ trait HasMediaTrait
         $options['styles'] = array_merge((array)$options['styles'], ['original' => '']);
 
         return $options;
+    }
+
+    /**
+     * Determine if the media is going to be deleted.
+     *
+     * This fixes the bug with soft deleting a resource also
+     * deletes the attached media objects.
+     *
+     * @return bool
+     */
+    public function canDeleteMedia()
+    {
+        return (isset($this->forceDeleting))
+            ? $this->forceDeleting
+            : true;
     }
 }

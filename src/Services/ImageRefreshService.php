@@ -9,8 +9,8 @@ class ImageRefreshService
     /**
      * Attempt to refresh the defined attachments on a particular model.
      *
-     * @param  string $class
-     * @param  array  $media
+     * @param string $class
+     * @param array  $media
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
@@ -36,7 +36,7 @@ class ImageRefreshService
     /**
      * Process a only a specified subset of MediaSort files.
      *
-     * @param  array $media
+     * @param array $media
      *
      * @return void
      */

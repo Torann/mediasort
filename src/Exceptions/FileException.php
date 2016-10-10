@@ -4,7 +4,7 @@ namespace Torann\MediaSort\Exceptions;
 
 use Exception;
 
-class InvalidUrlOptionException extends Exception
+class FileException extends Exception
 {
-
+    //
 }

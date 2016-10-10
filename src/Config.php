@@ -45,7 +45,7 @@ class Config
      * Handle the dynamic retrieval of attachment options.
      * Style options will be converted into a php stcClass.
      *
-     * @param  string $optionName
+     * @param string $optionName
      *
      * @return mixed
      */
@@ -62,12 +62,11 @@ class Config
         return null;
     }
 
-
     /**
      * Utility method for converting an associative array into an array of php stdClass objects.
      * Both array keys and array values will be conveted to object properties.
      *
-     * @param  mixed $arrayElements
+     * @param mixed $arrayElements
      *
      * @return mixed
      */

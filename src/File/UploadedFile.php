@@ -45,7 +45,7 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
     /**
      * Returns an informative upload error message.
      *
-     * @param  int $code
+     * @param int $code
      *
      * @return string
      */

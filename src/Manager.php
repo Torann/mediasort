@@ -105,7 +105,7 @@ class Manager
      * Handle the dynamic retrieval of attachment options.
      * Style options will be converted into a php stcClass.
      *
-     * @param  string $optionName
+     * @param string $optionName
      *
      * @return mixed
      */
@@ -117,8 +117,8 @@ class Manager
     /**
      * Mutator method for the uploadedFile property.
      *
-     * @param  mixed  $uploadedFile
-     * @param  string $styleName
+     * @param mixed  $uploadedFile
+     * @param string $styleName
      *
      * @return void
      */
@@ -143,8 +143,8 @@ class Manager
     /**
      * Set disk property.
      *
-     * @param  string            $diskName
-     * @param  FilesystemManager $filesystem
+     * @param string            $diskName
+     * @param FilesystemManager $filesystem
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
@@ -182,10 +182,11 @@ class Manager
 
     /**
      * Mutator method for the instance property.
+     *
      * This provides a mechanism for the attachment to access properties of the
      * corresponding model instance it's attached to.
      *
-     * @param  Model $instance
+     * @param Model $instance
      *
      * @return void
      */
@@ -207,7 +208,7 @@ class Manager
     /**
      * Mutator method for the config property.
      *
-     * @param  \Torann\MediaSort\Config $config
+     * @param \Torann\MediaSort\Config $config
      *
      * @return void
      */
@@ -243,7 +244,7 @@ class Manager
      */
     public function remove($files)
     {
-        return $this->disk->remove($files);
+        $this->disk->remove($files);
     }
 
     /**
@@ -251,12 +252,12 @@ class Manager
      * The file can be an actual uploaded file object or the path to
      * a resized image file on disk.
      *
-     * @param  string $source
-     * @param  string $target
+     * @param string $source
+     * @param string $target
      */
     public function move($source, $target)
     {
-        return $this->disk->move($source, $target);
+        $this->disk->move($source, $target);
     }
 
     /**
@@ -362,7 +363,7 @@ class Manager
     /**
      * Process the write queue.
      *
-     * @param  Model $instance
+     * @param Model $instance
      *
      * @return void
      */
@@ -375,7 +376,7 @@ class Manager
     /**
      * Queue up this attachments files for deletion.
      *
-     * @param  Model $instance
+     * @param Model $instance
      *
      * @return void
      */
@@ -388,7 +389,7 @@ class Manager
     /**
      * Process the delete queue.
      *
-     * @param  Model $instance
+     * @param Model $instance
      *
      * @return void
      */
@@ -402,7 +403,7 @@ class Manager
      * Destroys the attachment.  Has the same effect as previously assigning
      * MEDIASORT_NULL to the attachment and then saving.
      *
-     * @param  array $stylesToClear
+     * @param array $stylesToClear
      *
      * @return void
      */
@@ -416,7 +417,7 @@ class Manager
      * Clears out the attachment.  Has the same effect as previously assigning
      * MEDIASORT_NULL to the attachment.  Does not save the associated model.
      *
-     * @param  array $stylesToClear
+     * @param array $stylesToClear
      *
      * @return void
      */
@@ -479,8 +480,8 @@ class Manager
      * Used to manually trigger a processing. Helpful
      * for delayed upload of large files.
      *
-     * @param  Model  $instance
-     * @param  string $queue_path
+     * @param Model  $instance
+     * @param string $queue_path
      *
      * @return void
      */
@@ -576,7 +577,7 @@ class Manager
      * Add a subset (filtered via style) of the uploaded files for this attachment
      * to the queuedForDeletion queue.
      *
-     * @param  array $stylesToClear
+     * @param array $stylesToClear
      *
      * @return void
      */
@@ -617,8 +618,8 @@ class Manager
     /**
      * Set an attachment attribute on the underlying model instance.
      *
-     * @param  string $property
-     * @param  mixed  $value
+     * @param string $property
+     * @param mixed  $value
      *
      * @return void
      */

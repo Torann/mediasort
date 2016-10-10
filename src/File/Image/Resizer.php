@@ -26,8 +26,8 @@ class Resizer
     /**
      * Constructor method
      *
-     * @param  string $image_processor
-     * @param  int    $quality
+     * @param string $image_processor
+     * @param int    $quality
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
@@ -44,8 +44,8 @@ class Resizer
     /**
      * Resize an image using the computed settings.
      *
-     * @param  \Torann\MediaSort\File\UploadedFile $file
-     * @param  \stdClass                           $style
+     * @param \Torann\MediaSort\File\UploadedFile $file
+     * @param \stdClass                           $style
      *
      * @return string
      */
@@ -75,7 +75,7 @@ class Resizer
      * Parse the given style dimensions to extract out the file processing options,
      * perform any necessary image resizing for a given style.
      *
-     * @param  \stdClass $style
+     * @param \stdClass $style
      *
      * @return array
      */
@@ -124,9 +124,9 @@ class Resizer
     /**
      * Resize an image as a landscape (width only)
      *
-     * @param  UploadedFile $file
-     * @param  string       $width  - The image's new width.
-     * @param  string       $height - The image's new height.
+     * @param UploadedFile $file
+     * @param string       $width  - The image's new width.
+     * @param string       $height - The image's new height.
      *
      * @return \stdClass
      */
@@ -146,9 +146,9 @@ class Resizer
     /**
      * Resize an image as a portrait (height only)
      *
-     * @param  UploadedFile $file
-     * @param  string       $width  - The image's new width.
-     * @param  string       $height - The image's new height.
+     * @param UploadedFile $file
+     * @param string       $width  - The image's new width.
+     * @param string       $height - The image's new height.
      *
      * @return \stdClass
      */
@@ -168,9 +168,9 @@ class Resizer
     /**
      * Resize an image and then center crop it.
      *
-     * @param  UploadedFile $file
-     * @param  string       $width  - The image's new width.
-     * @param  string       $height - The image's new height.
+     * @param UploadedFile $file
+     * @param string       $width  - The image's new width.
+     * @param string       $height - The image's new height.
      *
      * @return \stdClass
      */
@@ -190,9 +190,9 @@ class Resizer
     /**
      * Resize an image to an exact width and height.
      *
-     * @param  UploadedFile $file
-     * @param  string       $width  - The image's new width.
-     * @param  string       $height - The image's new height.
+     * @param UploadedFile $file
+     * @param string       $width  - The image's new width.
+     * @param string       $height - The image's new height.
      *
      * @return \stdClass
      */
@@ -207,9 +207,9 @@ class Resizer
      * Resize an image as closely as possible to a given
      * width and height while still maintaining aspect ratio.
      *
-     * @param  UploadedFile $file
-     * @param  string       $width  - The image's new width.
-     * @param  string       $height - The image's new height.
+     * @param UploadedFile $file
+     * @param string       $width  - The image's new width.
+     * @param string       $height - The image's new height.
      *
      * @return \stdClass
      */
@@ -233,8 +233,8 @@ class Resizer
     /**
      * Resize an image using a user defined callback.
      *
-     * @param  UploadedFile $file
-     * @param               $callable
+     * @param UploadedFile $file
+     * @param              $callable
      *
      * @return \stdClass
      */
@@ -247,9 +247,9 @@ class Resizer
      * Attempts to find the best way to crop.
      * Takes into account the image being a portrait or landscape.
      *
-     * @param  \Imagine\Image\Box $size   - The image's current size.
-     * @param  string             $width  - The image's new width.
-     * @param  string             $height - The image's new height.
+     * @param \Imagine\Image\Box $size   - The image's current size.
+     * @param string             $width  - The image's new width.
+     * @param string             $height - The image's new height.
      *
      * @return array
      */

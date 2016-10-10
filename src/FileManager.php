@@ -28,7 +28,7 @@ class FileManager
     /**
      * Build an UploadedFile object using various file input types.
      *
-     * @param  mixed $file
+     * @param mixed $file
      *
      * @return \Torann\MediaSort\File\UploadedFile
      */
@@ -58,7 +58,7 @@ class FileManager
      * Build a \Torann\MediaSort\File\UploadedFile object from
      * a Symfony\Component\HttpFoundation\File\UploadedFile object.
      *
-     * @param  \Symfony\Component\HttpFoundation\File\UploadedFile $file
+     * @param \Symfony\Component\HttpFoundation\File\UploadedFile $file
      *
      * @return \Torann\MediaSort\File\UploadedFile
      * @throws \Torann\MediaSort\Exceptions\FileException
@@ -84,8 +84,8 @@ class FileManager
      * Build a Torann\MediaSort\File\UploadedFile object from a
      * base64 encoded image array. Usually from an API request.
      *
-     * @param  array $filename
-     * @param  array $data
+     * @param array $filename
+     * @param array $data
      *
      * @return \Torann\MediaSort\File\UploadedFile
      */
@@ -112,7 +112,7 @@ class FileManager
      * Build a Torann\MediaSort\File\UploadedFile object from the
      * raw php $_FILES array date.
      *
-     * @param  array $file
+     * @param array $file
      *
      * @return \Torann\MediaSort\File\UploadedFile
      */
@@ -125,7 +125,7 @@ class FileManager
      * Fetch a remote file using a string URL and convert it into
      * an instance of Torann\MediaSort\File\UploadedFile.
      *
-     * @param  string $file
+     * @param string $file
      *
      * @return \Torann\MediaSort\File\UploadedFile
      */
@@ -163,7 +163,7 @@ class FileManager
      * Fetch a local file using a string location and convert it into
      * an instance of Torann\MediaSort\File\UploadedFile.
      *
-     * @param  string $file
+     * @param string $file
      *
      * @return \Torann\MediaSort\File\UploadedFile
      */

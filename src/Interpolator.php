@@ -24,22 +24,22 @@ class Interpolator
     /**
      * Interpolate a string.
      *
-     * @param  string $string
-     * @param  string $styleName
+     * @param string $string
+     * @param string $styleName
      *
      * @return string
      */
     public function interpolate($string, $styleName = '')
     {
         return preg_replace_callback("/{(([[:alnum:]]|_|\.|-)+)?}/", function ($match) use ($styleName) {
-//            // Get a value from relationship
-//            if (strpos($match[1], '.')) {
-//                list($key, $value) = explode('.', $match[1]);
-//                return $this->getAttribute($key)->getAttribute($value);
-//            }
+            //// Get a value from relationship
+            //if (strpos($match[1], '.')) {
+            //    list($key, $value) = explode('.', $match[1]);
+            //    return $this->getAttribute($key)->getAttribute($value);
+            //}
 
             // Create local method call.
-            $method = "get" . studly_case($match[1]);
+            $method = 'get' . studly_case($match[1]);
 
             // Is interpolator value?
             if (method_exists($this, $method)) {
@@ -171,5 +171,4 @@ class Interpolator
     {
         return str_replace('\\', '/', ltrim($string, '\\'));
     }
-
 }

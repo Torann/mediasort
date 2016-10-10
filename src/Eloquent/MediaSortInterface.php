@@ -23,7 +23,7 @@ interface MediaSortInterface
     /**
      * Handle the dynamic retrieval of attachment objects.
      *
-     * @param  string $key
+     * @param string $key
      *
      * @return mixed
      */
@@ -32,8 +32,8 @@ interface MediaSortInterface
     /**
      * Handle the dynamic setting of attachment objects.
      *
-     * @param  string $key
-     * @param  mixed  $value
+     * @param string $key
+     * @param mixed  $value
      */
     public function setAttribute($key, $value);
 }

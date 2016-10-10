@@ -46,16 +46,16 @@ abstract class AbstractDisk
             try {
                 $this->filesystem->delete($file);
             }
-            // Ignore not found exceptions
-            catch (Exception $e) {}
+            catch (Exception $e) {
+            } // Ignore not found exceptions
         }
     }
 
     /**
      * Move an uploaded file to it's intended target.
      *
-     * @param  string $source
-     * @param  string $target
+     * @param string $source
+     * @param string $target
      *
      * @return void
      */
