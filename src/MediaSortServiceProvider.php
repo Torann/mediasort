@@ -26,6 +26,10 @@ class MediaSortServiceProvider extends ServiceProvider
             $this->registerResources();
             $this->registerCommands();
         }
+
+        $this->mergeConfigFrom(
+            __DIR__ . '/../config/mediasort.php', 'mediasort'
+        );
     }
 
     /**
@@ -61,10 +65,6 @@ class MediaSortServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../config/mediasort.php' => config_path('mediasort.php'),
             ], 'config');
-
-            $this->mergeConfigFrom(
-                __DIR__ . '/../config/mediasort.php', 'mediasort'
-            );
         }
     }
 
