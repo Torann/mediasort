@@ -2,6 +2,8 @@
 
 namespace Torann\MediaSort;
 
+use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Model;
 use Torann\MediaSort\File\Image\Resizer;
 use Illuminate\Filesystem\FilesystemManager;
@@ -88,6 +90,31 @@ class Manager
 
         // Set disk
         $this->setDisk($this->config->disk, $filesystem);
+    }
+
+    /**
+     * Create a new attachment object.
+     *
+     * @param string $name
+     * @param array  $options
+     *
+     * @return self
+     * @throws Exception
+     */
+    static public function create($name, $options)
+    {
+        // Sanity check
+        if (strpos($options['url'], '{id}') === false) {
+            throw new Exception('Invalid Url: an id interpolation is required.', 1);
+        }
+
+        // Set media disk
+        $options['disk'] = Arr::get($options, 'disk', config('filesystems.default', 'local'));
+
+        // Create option object
+        $config = new Config($name, $options);
+
+        return new self($config, app('filesystem'));
     }
 
     /**

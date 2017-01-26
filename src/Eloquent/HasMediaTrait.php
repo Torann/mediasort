@@ -3,6 +3,7 @@
 namespace Torann\MediaSort\Eloquent;
 
 use Exception;
+use Torann\MediaSort\Manager;
 
 trait HasMediaTrait
 {
@@ -111,8 +112,8 @@ trait HasMediaTrait
     }
 
     /**
-     * Register an media type.
-     * and add the media to the list of media to be processed during saving.
+     * Register an media type and add the media to the
+     * list of media to be processed during saving.
      *
      * @param string $name
      * @param array  $options
@@ -122,13 +123,7 @@ trait HasMediaTrait
      */
     protected function registerMedia($name, $options)
     {
-        $options = $this->mergeOptions($options);
-
-        if (strpos($options['url'], '{id}') === false) {
-            throw new Exception('Invalid Url: an id interpolation is required.', 1);
-        }
-
-        $media = app('mediasort', ['name' => $name, 'options' => $options]);
+        $media = Manager::create($name, $this->mergeOptions($options));
         $media->setInstance($this);
 
         $this->mediaFiles[$name] = $media;

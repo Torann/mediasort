@@ -44,14 +44,6 @@ class MediaSortServiceProvider extends ServiceProvider
         if (!defined('MEDIASORT_NULL')) {
             define('MEDIASORT_NULL', $this->mediaSortNull);
         }
-
-        $this->app->bind('mediasort', function ($app, $params) {
-            $params['options']['disk'] = $app->config->get('filesystems.default', 'local');
-
-            $config = new Config($params['name'], $params['options']);
-
-            return new Manager($config, $app['filesystem']);
-        });
     }
 
     /**
