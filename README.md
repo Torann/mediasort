@@ -23,11 +23,3 @@ For Laravel 4 Installation see [version 0.1](https://github.com/Torann/mediasort
 ### License
 
 MediaSort is open-sourced software licensed under the BSD 2-Clause License.
-
-## Change Log
-
-#### v1.0.9
-
-- Adhere to PSR-4 standards
-- Fixed bug #2
-- Fixed bug #6
