@@ -2,6 +2,7 @@
 
 namespace Torann\MediaSort;
 
+use Illuminate\Support\Arr;
 use Torann\MediaSort\File\UploadedFile;
 use Torann\MediaSort\Exceptions\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
@@ -131,22 +132,34 @@ class FileManager
      */
     protected function createFromUrl($file)
     {
-        $ch = curl_init($file);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $file,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.43 Safari/537.31',
+            CURLOPT_FOLLOWLOCATION => 1,
+        ]);
+
         $rawFile = curl_exec($ch);
+
         curl_close($ch);
+
+        // Get the mime type of the file
+        $sizeInfo = getimagesizefromstring($rawFile);
+        $mime = $sizeInfo['mime'];
 
         // Create a file path for the file by storing it on disk.
         $filePath = tempnam(sys_get_temp_dir(), 'STP');
         file_put_contents($filePath, $rawFile);
 
         // Get the original filename
-        $name = pathinfo($file)['basename'];
+        $name = strtok(pathinfo($file, PATHINFO_BASENAME), '?');
 
-        // Get the mime type of the file
-        $sizeInfo = getimagesizefromstring($rawFile);
-        $mime = $sizeInfo['mime'];
+        // Append missing file extension
+        if (!pathinfo($file, PATHINFO_EXTENSION)) {
+            $name = $name . '.' . $this->getExtension($mime);
+        }
 
         // Get the length of the file
         if (function_exists('mb_strlen')) {
@@ -170,5 +183,25 @@ class FileManager
     protected function createFromString($file)
     {
         return new UploadedFile($file, basename($file));
+    }
+
+    /**
+     * Get the file extension based on the mime type.
+     *
+     * @param $mime_type
+     *
+     * @return string
+     */
+    protected function getExtension($mime_type)
+    {
+        return Arr::get([
+            'image/jpeg' => 'jpg',
+            'image/gif' => 'gif',
+            'image/png' => 'png',
+            'image/vnd.wap.wbmp' => 'wbmp',
+            'image/xbm' => 'xbm',
+            'image/x-xbitmap' => 'xbm',
+            'image/x-xbm' => 'xbm',
+        ], $mime_type, 'png');
     }
 }
