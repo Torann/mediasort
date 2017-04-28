@@ -80,8 +80,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | The default library used for image processing.  Can be one of the following:
-    | \\Imagine\\Gd\\Imagine, \\Imagine\\Imagick\\Imagine,
-    | or \\Imagine\\Gmagick\\Imagine.
+    | \Imagine\Gd\Imagine, \Imagine\Imagick\Imagine,
+    | or \Imagine\Gmagick\Imagine.
     |
     */
 
@@ -101,6 +101,18 @@ return [
     */
 
     'image_quality' => 90,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Automatically Orient
+    |--------------------------------------------------------------------------
+    |
+    | Automatically orient images that are positioned incorrectly. This is
+    | helpful for mobile uploads.
+    |
+    */
+
+    'auto_orient' => false,
 
     /*
     |--------------------------------------------------------------------------

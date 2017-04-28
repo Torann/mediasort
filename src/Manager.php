@@ -84,7 +84,7 @@ class Manager
     function __construct(Config $config, FilesystemManager $filesystem)
     {
         $this->config = $config;
-        $this->resizer = new Resizer($this->config->image_processor, $this->config->image_quality);
+        $this->resizer = new Resizer($this->config->image_processor, $this->config->image_quality, $this->config->auto_orient);
         $this->fileManager = new FileManager($this);
         $this->interpolator = new Interpolator($this);
 
