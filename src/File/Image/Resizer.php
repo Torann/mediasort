@@ -227,7 +227,17 @@ class Resizer
      */
     protected function resizeCrop(ImageInterface $image, $width, $height, $enlarge = true)
     {
-        list($optimalWidth, $optimalHeight) = $this->getOptimalCrop($image->getSize(), $width, $height, $enlarge);
+        $size = $image->getSize();
+
+        if ($enlarge === false && $size->getWidth() < $width) {
+            $width = $size->getWidth();
+        }
+
+        if ($enlarge === false && $size->getHeight() < $height) {
+            $height = $size->getHeight();
+        }
+
+        list($optimalWidth, $optimalHeight) = $this->getOptimalCrop($size, $width, $height, $enlarge);
 
         // Find center - this will be used for the crop
         $centerX = ($optimalWidth / 2) - ($width / 2);
