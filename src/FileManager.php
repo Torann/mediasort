@@ -182,7 +182,7 @@ class FileManager
      */
     protected function createFromString($file)
     {
-        return new UploadedFile($file, basename($file));
+        return new UploadedFile($file, basename($file), null, filesize($file));
     }
 
     /**
