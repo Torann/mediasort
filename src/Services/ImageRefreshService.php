@@ -9,8 +9,8 @@ class ImageRefreshService
     /**
      * Attempt to refresh the defined attachments on a particular model.
      *
-     * @param  string $class
-     * @param  array  $media
+     * @param string $class
+     * @param array  $media
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
@@ -23,8 +23,7 @@ class ImageRefreshService
         // Get model
         $models = app($class)->all();
 
-        if ($media)
-        {
+        if ($media) {
             $media = explode(',', str_replace(', ', ',', $media));
             $this->processSomeFiles($models, $media);
 
@@ -37,15 +36,14 @@ class ImageRefreshService
     /**
      * Process a only a specified subset of MediaSort files.
      *
-     * @param  array $media
+     * @param array $media
+     *
      * @return void
      */
     protected function processSomeFiles($models, $media)
     {
-        foreach ($models as $model)
-        {
-            foreach ($model->getMediaFiles() as $file)
-            {
+        foreach ($models as $model) {
+            foreach ($model->getMediaFiles() as $file) {
                 if (in_array($file->name, $media)) {
                     $file->reprocess();
                 }

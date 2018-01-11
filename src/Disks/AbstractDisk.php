@@ -2,17 +2,16 @@
 
 namespace Torann\MediaSort\Disks;
 
-use File;
-use Config;
-use Storage;
 use Exception;
+use Torann\MediaSort\Manager;
+use Illuminate\Filesystem\FilesystemManager;
 
 abstract class AbstractDisk
 {
     /**
      * The current media object being processed.
      *
-     * @var \Torann\MediaSort\Manager
+     * @var Manager
      */
     public $media;
 
@@ -26,12 +25,14 @@ abstract class AbstractDisk
     /**
      * Constructor method
      *
-     * @param \Torann\MediaSort\Manager $media
+     * @param Manager           $media
+     * @param FilesystemManager $filesystem
      */
-    function __construct($media)
+    function __construct(Manager $media, FilesystemManager $filesystem)
     {
         $this->media = $media;
-        $this->config = Config::get("filesystems.disks.{$this->media->disk}");
+        $this->filesystem = $filesystem;
+        $this->config = config("filesystems.disks.{$this->media->disk}");
     }
 
     /**
@@ -41,28 +42,29 @@ abstract class AbstractDisk
      */
     public function remove($files)
     {
-        foreach ($files as $file)
-        {
+        foreach ($files as $file) {
             try {
-                Storage::delete($file);
+                $this->filesystem->delete($file);
+            }
+            catch (Exception $e) {
             } // Ignore not found exceptions
-            catch (Exception $e) {}
         }
     }
 
     /**
      * Move an uploaded file to it's intended target.
      *
-     * @param  string $source
-     * @param  string $target
+     * @param string $source
+     * @param string $target
+     *
      * @return void
      */
     public function move($source, $target)
     {
         // Save file
-        Storage::put(
+        $this->filesystem->put(
             $target,
-            File::get($source),
+            file_get_contents($source),
             $this->media->visibility
         );
     }

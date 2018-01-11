@@ -2,7 +2,11 @@
 
 namespace Torann\MediaSort;
 
+use Exception;
+use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Model;
 use Torann\MediaSort\File\Image\Resizer;
+use Illuminate\Filesystem\FilesystemManager;
 use Torann\MediaSort\Exceptions\InvalidClassException;
 
 class Manager
@@ -74,17 +78,43 @@ class Manager
     /**
      * Constructor method
      *
-     * @param \Torann\MediaSort\Config $config
+     * @param Config            $config
+     * @param FilesystemManager $filesystem
      */
-    function __construct(Config $config)
+    function __construct(Config $config, FilesystemManager $filesystem)
     {
         $this->config = $config;
-        $this->resizer = new Resizer($this->config->image_processor);
+        $this->resizer = new Resizer($this->config->image_processor, $this->config->image_quality, $this->config->auto_orient);
         $this->fileManager = new FileManager($this);
         $this->interpolator = new Interpolator($this);
 
         // Set disk
-        $this->setDisk($this->config->disk);
+        $this->setDisk($this->config->disk, $filesystem);
+    }
+
+    /**
+     * Create a new attachment object.
+     *
+     * @param string $name
+     * @param array  $options
+     *
+     * @return self
+     * @throws Exception
+     */
+    static public function create($name, $options)
+    {
+        // Sanity check
+        if (strpos($options['url'], '{id}') === false) {
+            throw new Exception('Invalid Url: an id interpolation is required.', 1);
+        }
+
+        // Set media disk
+        $options['disk'] = Arr::get($options, 'disk', config('filesystems.default', 'local'));
+
+        // Create option object
+        $config = new Config($name, $options);
+
+        return new self($config, app('filesystem'));
     }
 
     /**
@@ -102,7 +132,8 @@ class Manager
      * Handle the dynamic retrieval of attachment options.
      * Style options will be converted into a php stcClass.
      *
-     * @param  string $optionName
+     * @param string $optionName
+     *
      * @return mixed
      */
     public function __get($optionName)
@@ -113,8 +144,9 @@ class Manager
     /**
      * Mutator method for the uploadedFile property.
      *
-     * @param  mixed  $uploadedFile
-     * @param  string $styleName
+     * @param mixed  $uploadedFile
+     * @param string $styleName
+     *
      * @return void
      */
     public function setUploadedFile($uploadedFile, $styleName)
@@ -138,11 +170,12 @@ class Manager
     /**
      * Set disk property.
      *
-     * @param  string $diskName
+     * @param string            $diskName
+     * @param FilesystemManager $filesystem
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    public function setDisk($diskName)
+    public function setDisk($diskName, FilesystemManager $filesystem)
     {
         $diskName = ucfirst($diskName);
         $class = "\\Torann\\MediaSort\\Disks\\{$diskName}";
@@ -151,7 +184,7 @@ class Manager
             throw new InvalidClassException("Disk type \"{$diskName}\" not found.");
         }
 
-        $this->disk = new $class($this);
+        $this->disk = new $class($this, $filesystem);
     }
 
     /**
@@ -176,10 +209,12 @@ class Manager
 
     /**
      * Mutator method for the instance property.
+     *
      * This provides a mechanism for the attachment to access properties of the
      * corresponding model instance it's attached to.
      *
-     * @param  Model $instance
+     * @param Model $instance
+     *
      * @return void
      */
     public function setInstance($instance)
@@ -200,7 +235,8 @@ class Manager
     /**
      * Mutator method for the config property.
      *
-     * @param  \Torann\MediaSort\Config $config
+     * @param \Torann\MediaSort\Config $config
+     *
      * @return void
      */
     public function setConfig($config)
@@ -235,7 +271,7 @@ class Manager
      */
     public function remove($files)
     {
-        return $this->disk->remove($files);
+        $this->disk->remove($files);
     }
 
     /**
@@ -243,29 +279,53 @@ class Manager
      * The file can be an actual uploaded file object or the path to
      * a resized image file on disk.
      *
-     * @param  string $source
-     * @param  string $target
+     * @param string $source
+     * @param string $target
      */
     public function move($source, $target)
     {
-        return $this->disk->move($source, $target);
+        $this->disk->move($source, $target);
     }
 
     /**
      * Generates the url to a file upload.
      *
      * @param string $styleName
+     *
      * @return string
      */
     public function url($styleName = '')
     {
         if ($this->originalFilename()) {
-            if ($url = $this->path($styleName)) {
-                return asset($this->prefix_url . $url);
+            if ($path = $this->path($styleName)) {
+                return $this->prefix_url . $path;
             }
         }
 
-        return asset($this->defaultUrl($styleName));
+        return $this->defaultUrl($styleName);
+    }
+
+    /**
+     * Generates an array of all style urls.
+     *
+     * @param bool $skipEmpty
+     *
+     * @return array
+     */
+    public function toArray($skipEmpty = false)
+    {
+        // Skip when no media
+        if ($skipEmpty === true && $this->hasMedia() === false) {
+            return null;
+        }
+
+        $urls = [];
+
+        foreach ($this->styles as $style) {
+            $urls[$style->name] = $this->url($style->name);
+        }
+
+        return $urls;
     }
 
     /**
@@ -282,6 +342,7 @@ class Manager
      * Generates the filesystem path to an uploaded file.
      *
      * @param string $styleName
+     *
      * @return string
      */
     public function path($styleName = '')
@@ -329,7 +390,8 @@ class Manager
     /**
      * Process the write queue.
      *
-     * @param  Eloquent $instance
+     * @param Model $instance
+     *
      * @return void
      */
     public function afterSave($instance)
@@ -341,7 +403,8 @@ class Manager
     /**
      * Queue up this attachments files for deletion.
      *
-     * @param  Eloquent $instance
+     * @param Model $instance
+     *
      * @return void
      */
     public function beforeDelete($instance)
@@ -353,7 +416,8 @@ class Manager
     /**
      * Process the delete queue.
      *
-     * @param  Eloquent $instance
+     * @param Model $instance
+     *
      * @return void
      */
     public function afterDelete($instance)
@@ -366,7 +430,8 @@ class Manager
      * Destroys the attachment.  Has the same effect as previously assigning
      * MEDIASORT_NULL to the attachment and then saving.
      *
-     * @param  array $stylesToClear
+     * @param array $stylesToClear
+     *
      * @return void
      */
     public function destroy($stylesToClear = [])
@@ -379,7 +444,8 @@ class Manager
      * Clears out the attachment.  Has the same effect as previously assigning
      * MEDIASORT_NULL to the attachment.  Does not save the associated model.
      *
-     * @param  array $stylesToClear
+     * @param array $stylesToClear
+     *
      * @return void
      */
     public function clear($stylesToClear = [])
@@ -418,8 +484,7 @@ class Manager
             return;
         }
 
-        foreach ($this->styles as $style)
-        {
+        foreach ($this->styles as $style) {
             if (!$file = $this->path($style->name)) {
                 continue;
             }
@@ -442,8 +507,9 @@ class Manager
      * Used to manually trigger a processing. Helpful
      * for delayed upload of large files.
      *
-     * @param  Eloquent $instance
-     * @param  string   $queue_path
+     * @param Model  $instance
+     * @param string $queue_path
+     *
      * @return void
      */
     public function processQueue($instance, $queue_path)
@@ -478,8 +544,7 @@ class Manager
      */
     protected function flushWrites()
     {
-        foreach ($this->queuedForWrite as $style)
-        {
+        foreach ($this->queuedForWrite as $style) {
             if ($style->value && $this->uploadedFile->isImage()) {
                 $file = $this->resizer->resize($this->uploadedFile, $style);
             }
@@ -511,12 +576,12 @@ class Manager
      * Generates the default url if no file attachment is present.
      *
      * @param string $styleName
+     *
      * @return string
      */
     protected function defaultUrl($styleName = '')
     {
-        if ($this->default_url)
-        {
+        if ($this->default_url) {
             $url = $this->interpolator->interpolate($this->default_url, $styleName);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
@@ -539,7 +604,8 @@ class Manager
      * Add a subset (filtered via style) of the uploaded files for this attachment
      * to the queuedForDeletion queue.
      *
-     * @param  array $stylesToClear
+     * @param array $stylesToClear
+     *
      * @return void
      */
     protected function queueSomeForDeletion($stylesToClear)
@@ -562,8 +628,7 @@ class Manager
             return;
         }
 
-        if (!$this->preserve_files)
-        {
+        if (!$this->preserve_files) {
             $filePaths = array_map(function ($style) {
                 return $this->path($style->name);
             }, $this->styles);
@@ -580,8 +645,9 @@ class Manager
     /**
      * Set an attachment attribute on the underlying model instance.
      *
-     * @param  string $property
-     * @param  mixed  $value
+     * @param string $property
+     * @param mixed  $value
+     *
      * @return void
      */
     protected function instanceWrite($property, $value)
@@ -592,7 +658,7 @@ class Manager
             $this->instance->setAttribute($fieldName, $value);
         }
         else {
-            if (array_key_exists($fieldName, $this->instance['fillable'])) {
+            if (in_array($fieldName, $this->instance->getFillable())) {
                 $this->instance->setAttribute($fieldName, $value);
             }
         }

@@ -34,7 +34,7 @@ class RefreshCommand extends Command
     /**
      * Create a new command instance.
      *
-     * @param  ImageRefreshService $imageRefreshService
+     * @param ImageRefreshService $imageRefreshService
      */
     public function __construct(ImageRefreshService $imageRefreshService)
     {
@@ -44,11 +44,21 @@ class RefreshCommand extends Command
     }
 
     /**
-     * Execute the console command.
+     * Execute the console command for Laravel 5.4 and below
      *
      * @return void
      */
     public function fire()
+    {    
+        $this->handle();
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return void
+     */
+    public function handle()
     {
         $this->info('Refreshing uploaded images...');
         $this->imageRefreshService->refresh($this->argument('class'), $this->option('attachments'));

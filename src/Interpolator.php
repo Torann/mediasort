@@ -24,22 +24,22 @@ class Interpolator
     /**
      * Interpolate a string.
      *
-     * @param  string  $string
-     * @param  string  $styleName
+     * @param string $string
+     * @param string $styleName
+     *
      * @return string
      */
     public function interpolate($string, $styleName = '')
     {
-        return preg_replace_callback("/{(([[:alnum:]]|_|\.|-)+)?}/", function ($match) use ($styleName)
-        {
-//            // Get a value from relationship
-//            if (strpos($match[1], '.')) {
-//                list($key, $value) = explode('.', $match[1]);
-//                return $this->getAttribute($key)->getAttribute($value);
-//            }
+        return preg_replace_callback("/{(([[:alnum:]]|_|\.|-)+)?}/", function ($match) use ($styleName) {
+            //// Get a value from relationship
+            //if (strpos($match[1], '.')) {
+            //    list($key, $value) = explode('.', $match[1]);
+            //    return $this->getAttribute($key)->getAttribute($value);
+            //}
 
             // Create local method call.
-            $method = "get" . studly_case($match[1]);
+            $method = 'get' . studly_case($match[1]);
 
             // Is interpolator value?
             if (method_exists($this, $method)) {
@@ -61,8 +61,7 @@ class Interpolator
     }
 
     /**
-     * Returns the current class name, taking into account namespaces, e.g
-     * '\\Swingline\\MediaSort' will become swingline/mediasort.
+     * Returns the current class name, taking into account namespaces.
      *
      * @return string
      */
@@ -119,7 +118,8 @@ class Interpolator
     /**
      * Returns the style, or the default style if an empty style is supplied.
      *
-     * @param string  $styleName
+     * @param string $styleName
+     *
      * @return string
      */
     protected function getStyle($styleName = '')
@@ -150,7 +150,8 @@ class Interpolator
     /**
      * Return attribute from model.
      *
-     * @param string  $string
+     * @param string $string
+     *
      * @return string
      */
     public function getAttribute($string)
@@ -159,15 +160,15 @@ class Interpolator
     }
 
     /**
-     * Utitlity function to turn a backslashed string into a string
+     * Utility function to turn a back-slashed string into a string
      * suitable for use in a file path, e.g '\foo\bar' becomes 'foo/bar'.
      *
      * @param string $string
+     *
      * @return string
      */
     protected function handleBackslashes($string)
     {
         return str_replace('\\', '/', ltrim($string, '\\'));
     }
-
 }

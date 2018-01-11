@@ -1,6 +1,6 @@
 <?php
 
-return array(
+return [
 
     /*
     |--------------------------------------------------------------------------
@@ -80,12 +80,39 @@ return array(
     |--------------------------------------------------------------------------
     |
     | The default library used for image processing.  Can be one of the following:
-    | \\Imagine\\Gd\\Imagine, \\Imagine\\Imagick\\Imagine,
-    | or \\Imagine\\Gmagick\\Imagine.
+    | \Imagine\Gd\Imagine, \Imagine\Imagick\Imagine,
+    | or \Imagine\Gmagick\Imagine.
     |
     */
 
     'image_processor' => '\\Imagine\\Gd\\Imagine',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Image Quality
+    |--------------------------------------------------------------------------
+    |
+    | Define optionally the quality of the image. It is normalized for all
+    | file types to a range from 0 (poor quality, small file) to 100 (best
+    | quality, big file). Quality is only applied if you're encoding JPG
+    | format since PNG compression is lossless and does not affect image
+    | quality. The default value is 90.
+    |
+    */
+
+    'image_quality' => 90,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Automatically Orient
+    |--------------------------------------------------------------------------
+    |
+    | Automatically orient images that are positioned incorrectly. This is
+    | helpful for mobile uploads.
+    |
+    */
+
+    'auto_orient' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -151,4 +178,4 @@ return array(
 
     'model_primary_key' => null,
 
-);
+];

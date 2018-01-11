@@ -4,7 +4,6 @@ namespace Torann\MediaSort\File;
 
 class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
 {
-
     /**
      * An array of key value pairs for valid image
      * extensions and their associated MIME types.
@@ -46,7 +45,8 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
     /**
      * Returns an informative upload error message.
      *
-     * @param  int $code
+     * @param int $code
+     *
      * @return string
      */
     public function getErrorMessage($code = null)
@@ -67,5 +67,26 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
         $message = isset($errors[$code]) ? $errors[$code] : 'The file "%s" was not uploaded due to an unknown error.';
 
         return sprintf($message, $this->getClientOriginalName(), $maxFilesize);
+    }
+
+    /**
+     * Returns locale independent base name of the given path.
+     *
+     * @param string $name The new file name
+     *
+     * @return string containing
+     */
+    protected function getName($name)
+    {
+        $name = parent::getName($name);
+
+        // This fixes any URL encoded filename and sanitize it
+        $name = strtolower(urldecode($name));
+
+        // Replace spaces with a dash
+        $name = preg_replace('!\s+!', '-', $name);
+
+        // Remove odd characters
+        return preg_replace('/[^A-Za-z0-9\-_\.]/', '', $name);
     }
 }
