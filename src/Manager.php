@@ -658,7 +658,7 @@ class Manager
             $this->instance->setAttribute($fieldName, $value);
         }
         else {
-            if (in_array($fieldName, $this->instance['fillable'])) {
+            if (in_array($fieldName, $this->instance->getFillable())) {
                 $this->instance->setAttribute($fieldName, $value);
             }
         }
