@@ -6,6 +6,7 @@ use Imagine\Image\Box;
 use Imagine\Image\Point;
 use Imagine\Image\BoxInterface;
 use Imagine\Image\ImageInterface;
+use Imagine\Image\ManipulatorInterface;
 use Torann\MediaSort\File\UploadedFile;
 use Torann\MediaSort\Exceptions\InvalidClassException;
 
@@ -165,7 +166,7 @@ class Resizer
      * @param string         $height
      * @param bool           $enlarge
      *
-     * @return \stdClass
+     * @return ManipulatorInterface
      */
     protected function resizeLandscape(ImageInterface $image, $width, $height, $enlarge = true)
     {
@@ -181,9 +182,7 @@ class Resizer
             ->widen($width)
             ->heighten($width * $ratio);
 
-        $image = $image->resize($dimensions);
-
-        return $image;
+        return $image->resize($dimensions);
     }
 
     /**
@@ -194,7 +193,7 @@ class Resizer
      * @param string         $height
      * @param bool           $enlarge
      *
-     * @return \stdClass
+     * @return ManipulatorInterface
      */
     protected function resizePortrait(ImageInterface $image, $width, $height, $enlarge = true)
     {
@@ -210,9 +209,7 @@ class Resizer
             ->heighten($height)
             ->widen($height * $ratio);
 
-        $image = $image->resize($dimensions);
-
-        return $image;
+        return $image->resize($dimensions);
     }
 
     /**
@@ -223,7 +220,7 @@ class Resizer
      * @param string         $height
      * @param bool           $enlarge
      *
-     * @return \stdClass
+     * @return ManipulatorInterface
      */
     protected function resizeCrop(ImageInterface $image, $width, $height, $enlarge = true)
     {
@@ -280,7 +277,7 @@ class Resizer
      * @param string         $height
      * @param bool           $enlarge
      *
-     * @return ImageInterface
+     * @return ManipulatorInterface
      */
     protected function resizeAuto(ImageInterface $image, $width, $height, $enlarge = true)
     {
