@@ -164,18 +164,20 @@ class Manager
 
         $this->uploadedFile = $this->fileManager->make($uploadedFile);
 
-        // Get the original filename
+        // Get the original values
         $filename = $this->uploadedFile->getClientOriginalName();
+        $content_type = $this->uploadedFile->getMimeType();
 
         // Convert image to PNG
         if ($this->convertToPng($this->uploadedFile)) {
             $filename = preg_replace('/\.[^.]+$/', '.png', $filename);
+            $content_type = 'image/png';
         }
 
         // Set model values
         $this->instanceWrite('file_name', $filename);
         $this->instanceWrite('file_size', $this->uploadedFile->getClientSize());
-        $this->instanceWrite('content_type', $this->uploadedFile->getMimeType());
+        $this->instanceWrite('content_type', $content_type);
         $this->instanceWrite('updated_at', date('Y-m-d H:i:s'));
 
         $this->queueAllForWrite();
