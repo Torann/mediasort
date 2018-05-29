@@ -5,6 +5,7 @@ namespace Torann\MediaSort;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Model;
+use Torann\MediaSort\File\UploadedFile;
 use Torann\MediaSort\File\Image\Resizer;
 use Illuminate\Filesystem\FilesystemManager;
 use Torann\MediaSort\Exceptions\InvalidClassException;
@@ -84,9 +85,13 @@ class Manager
     function __construct(Config $config, FilesystemManager $filesystem)
     {
         $this->config = $config;
-        $this->resizer = new Resizer($this->config->image_processor, $this->config->image_quality, $this->config->auto_orient);
         $this->fileManager = new FileManager($this);
         $this->interpolator = new Interpolator($this);
+        $this->resizer = new Resizer(
+            $this->config->image_processor,
+            $this->config->image_quality,
+            $this->config->auto_orient
+        );
 
         // Set disk
         $this->setDisk($this->config->disk, $filesystem);
@@ -159,7 +164,16 @@ class Manager
 
         $this->uploadedFile = $this->fileManager->make($uploadedFile);
 
-        $this->instanceWrite('file_name', $this->uploadedFile->getClientOriginalName());
+        // Get the original filename
+        $filename = $this->uploadedFile->getClientOriginalName();
+
+        // Convert image to PNG
+        if ($this->convertToPng($this->uploadedFile)) {
+            $filename = preg_replace('/\.[^.]+$/', '.png', $filename);
+        }
+
+        // Set model values
+        $this->instanceWrite('file_name', $filename);
         $this->instanceWrite('file_size', $this->uploadedFile->getClientSize());
         $this->instanceWrite('content_type', $this->uploadedFile->getMimeType());
         $this->instanceWrite('updated_at', date('Y-m-d H:i:s'));
@@ -205,6 +219,19 @@ class Manager
     public function getInterpolator()
     {
         return $this->interpolator;
+    }
+
+    /**
+     * Should the image be converted to a PNG file.
+     *
+     * @param UploadedFile $file
+     *
+     * @return bool
+     */
+    protected function convertToPng(UploadedFile $file)
+    {
+        return $this->convert_tiff
+            && in_array(exif_imagetype($file), [IMAGETYPE_TIFF_II, IMAGETYPE_TIFF_MM]);
     }
 
     /**
@@ -492,7 +519,9 @@ class Manager
             $file = $this->fileManager->make($file);
 
             if ($style->value && $file->isImage()) {
-                $file = $this->resizer->resize($file, $style);
+                $file = $this->resizer->resize(
+                    $file, $style, $this->convertToPng($file)
+                );
             }
             else {
                 $file = $file->getRealPath();
@@ -546,7 +575,9 @@ class Manager
     {
         foreach ($this->queuedForWrite as $style) {
             if ($style->value && $this->uploadedFile->isImage()) {
-                $file = $this->resizer->resize($this->uploadedFile, $style);
+                $file = $this->resizer->resize(
+                    $this->uploadedFile, $style, $this->convertToPng($this->uploadedFile)
+                );
             }
             else {
                 $file = $this->uploadedFile->getRealPath();

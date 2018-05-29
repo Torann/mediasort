@@ -65,16 +65,22 @@ class Resizer
      *
      * @param \Torann\MediaSort\File\UploadedFile $file
      * @param \stdClass                           $style
+     * @param bool                                $convert_to_png
      *
      * @return string
      */
-    public function resize(UploadedFile $file, $style)
+    public function resize(UploadedFile $file, $style, $convert_to_png = false)
     {
         $this->imagine = new $this->image_processor;
 
         $filePath = tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
         list($width, $height, $option, $enlarge) = $this->parseStyleDimensions($style);
         $method = "resize" . ucfirst($option);
+
+        // Convert TIFF images into PNG files
+        if ($convert_to_png === true) {
+            $filePath = preg_replace('/\.[^.]+$/', '.png', $filePath);
+        }
 
         if ($method == 'resizeCustom') {
             $this->resizeCustom($file, $style->value, $enlarge)
