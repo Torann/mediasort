@@ -21,7 +21,7 @@ class FileManager
      *
      * @param \Torann\MediaSort\Manager $media
      */
-    function __construct($media)
+    public function __construct($media)
     {
         $this->media = $media;
     }

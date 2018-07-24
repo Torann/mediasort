@@ -85,7 +85,7 @@ return [
     |
     */
 
-    'image_processor' => '\\Imagine\\Gd\\Imagine',
+    'image_processor' => \Imagine\Gd\Imagine::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -119,12 +119,24 @@ return [
     | Convert Tiff Images
     |--------------------------------------------------------------------------
     |
-    | Automatically convert TIFF images to PNG. This option workds with the
+    | Automatically convert TIFF images to PNG. This option works with the
     | Imagick image processor.
     |
     */
 
     'convert_tiff' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Image Color Palette
+    |--------------------------------------------------------------------------
+    |
+    | Set a palette for the image. Useful to change colorspace. Value must be
+    | a class that implements the \Imagine\Image\Palette\PaletteInterface
+    |
+    */
+
+    'color_palette' => null,
 
     /*
     |--------------------------------------------------------------------------

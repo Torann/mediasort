@@ -4,34 +4,34 @@ namespace Torann\MediaSort;
 
 use Exception;
 use Illuminate\Support\Arr;
+use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
 use Torann\MediaSort\File\UploadedFile;
 use Torann\MediaSort\File\Image\Resizer;
-use Illuminate\Filesystem\FilesystemManager;
 use Torann\MediaSort\Exceptions\InvalidClassException;
 
 class Manager
 {
     /**
-     * The model the attachment belongs to.
+     * Media identifier.
      *
      * @var string
+     */
+    public $name;
+
+    /**
+     * The model the attachment belongs to.
+     *
+     * @var Model
      */
     protected $instance;
 
     /**
-     * An instance of the configuration class.
+     * Configuration values.
      *
-     * @var \Torann\MediaSort\Config
+     * @var array
      */
-    protected $config;
-
-    /**
-     * An instance of the interpolator class for processing interpolations.
-     *
-     * @var \Torann\MediaSort\Interpolator
-     */
-    protected $interpolator;
+    protected $config = [];
 
     /**
      * The uploaded file object for the attachment.
@@ -41,109 +41,37 @@ class Manager
     protected $uploadedFile;
 
     /**
-     * An instance of the resizer library that's being used for image processing.
-     *
-     * @var \Torann\MediaSort\File\Image\Resizer
-     */
-    protected $resizer;
-
-    /**
      * An FileManager instance for converting file input formats (Symfony uploaded file object
      * arrays, string, etc) into an instance of \Torann\MediaSort\UploadedFile.
      *
      * @var \Torann\MediaSort\FileManager
      */
-    protected $fileManager;
+    protected $fileManagerInstance;
 
     /**
      * An instance of the disk.
      *
      * @var \Torann\MediaSort\Disks\AbstractDisk.
      */
-    protected $disk;
+    protected $diskInstance;
 
     /**
-     * The uploaded/resized files that have been queued up for deletion.
+     * Queue used for various file processing.
      *
      * @var array
      */
-    protected $queuedForDeletion = [];
-
-    /**
-     * The uploaded/re-sized files that have been queued up for deletion.
-     *
-     * @var array
-     */
-    protected $queuedForWrite = [];
+    protected $queues = [];
 
     /**
      * Constructor method
      *
-     * @param Config            $config
-     * @param FilesystemManager $filesystem
-     */
-    function __construct(Config $config, FilesystemManager $filesystem)
-    {
-        $this->config = $config;
-        $this->fileManager = new FileManager($this);
-        $this->interpolator = new Interpolator($this);
-        $this->resizer = new Resizer(
-            $this->config->image_processor,
-            $this->config->image_quality,
-            $this->config->auto_orient
-        );
-
-        // Set disk
-        $this->setDisk($this->config->disk, $filesystem);
-    }
-
-    /**
-     * Create a new attachment object.
-     *
      * @param string $name
-     * @param array  $options
-     *
-     * @return self
-     * @throws Exception
+     * @param array  $config
      */
-    static public function create($name, $options)
+    public function __construct($name, array $config)
     {
-        // Sanity check
-        if (strpos($options['url'], '{id}') === false) {
-            throw new Exception('Invalid Url: an id interpolation is required.', 1);
-        }
-
-        // Set media disk
-        $options['disk'] = Arr::get($options, 'disk', config('filesystems.default', 'local'));
-
-        // Create option object
-        $config = new Config($name, $options);
-
-        return new self($config, app('filesystem'));
-    }
-
-    /**
-     * Handle the dynamic setting of attachment options.
-     *
-     * @param string $name
-     * @param mixed  $value
-     */
-    public function __set($name, $value)
-    {
-        $this->config->$name = $value;
-    }
-
-    /**
-     * Handle the dynamic retrieval of attachment options.
-     * Style options will be converted into a php stcClass.
-     *
-     * @param string $optionName
-     *
-     * @return mixed
-     */
-    public function __get($optionName)
-    {
-        return $this->config->$optionName;
+        $this->name = $name;
+        $this->setConfig($config);
     }
 
     /**
@@ -162,7 +90,7 @@ class Manager
             return;
         }
 
-        $this->uploadedFile = $this->fileManager->make($uploadedFile);
+        $this->uploadedFile = $this->getFileManager()->make($uploadedFile);
 
         // Get the original values
         $filename = $this->uploadedFile->getClientOriginalName();
@@ -176,51 +104,50 @@ class Manager
 
         // Set model values
         $this->instanceWrite('file_name', $filename);
-        $this->instanceWrite('file_size', $this->uploadedFile->getClientSize());
+        $this->instanceWrite('file_size', $this->uploadedFile->getSize());
         $this->instanceWrite('content_type', $content_type);
         $this->instanceWrite('updated_at', date('Y-m-d H:i:s'));
 
-        $this->queueAllForWrite();
+        // Queue all styles for writing
+        $this->setQueue('write', $this->styles);
     }
 
     /**
      * Set disk property.
      *
-     * @param string            $diskName
-     * @param FilesystemManager $filesystem
+     * @param string $name
      *
-     * @throws \Torann\MediaSort\Exceptions\InvalidClassException
+     * @return self
      */
-    public function setDisk($diskName, FilesystemManager $filesystem)
+    public function setDisk($name)
     {
-        $diskName = ucfirst($diskName);
-        $class = "\\Torann\\MediaSort\\Disks\\{$diskName}";
+        $this->__set('disk', $name);
 
-        if (!class_exists($class)) {
-            throw new InvalidClassException("Disk type \"{$diskName}\" not found.");
-        }
-
-        $this->disk = new $class($this, $filesystem);
+        return $this;
     }
 
     /**
-     * Accessor method for the disk property.
+     * Get disk instance.
      *
      * @return \Torann\MediaSort\Disks\AbstractDisk
+     * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
     public function getDisk()
     {
-        return $this->disk;
-    }
+        if ($this->diskInstance === null) {
+            // Create disk class
+            $class = "\\Torann\\MediaSort\\Disks\\" . ucfirst($this->config('disk'));
 
-    /**
-     * Accessor method for the interpolator property.
-     *
-     * @return \Torann\MediaSort\Interpolator
-     */
-    public function getInterpolator()
-    {
-        return $this->interpolator;
+            // Verify disk
+            if (class_exists($class) === false) {
+                throw new InvalidClassException("Disk type \"{$class}\" not found.");
+            }
+
+            // Create disk instance
+            $this->diskInstance = Container::getInstance()->makeWith($class, ['media' => $this]);
+        }
+
+        return $this->diskInstance;
     }
 
     /**
@@ -264,33 +191,62 @@ class Manager
     /**
      * Mutator method for the config property.
      *
-     * @param \Torann\MediaSort\Config $config
+     * @param array $config
      *
      * @return void
+     * @throws Exception
      */
     public function setConfig($config)
     {
         $this->config = $config;
+
+        // Sanity check
+        if (strpos($this->config['url'], '{id}') === false) {
+            throw new Exception('Invalid Url: an id interpolation is required.', 1);
+        }
+
+        // Set media disk
+        $this->config['disk'] = Arr::get($this->config, 'disk', config('filesystems.default', 'local'));
     }
 
     /**
      * Accessor method for the QueuedForDeletion property.
      *
+     * @param string $queue
+     *
      * @return array
      */
-    public function getQueuedForDeletion()
+    public function getQueue($queue)
     {
-        return $this->queuedForDeletion;
+        return (array)Arr::get($this->queues, $queue, []);
     }
 
     /**
-     * Mutator method for the QueuedForDeletion property.
+     * Set an item to be queued.
      *
-     * @param array $array
+     * @param string       $queue
+     * @param string|array $value
      */
-    public function setQueuedForDeletion($array)
+    public function setQueue($queue, $value)
     {
-        $this->queuedForDeletion = $array;
+        // Ensure the value is an array
+        if (is_array($value) === false) {
+            $value = [$value];
+        }
+
+        $this->queues[$queue] = array_merge(
+            $this->getQueue($queue), $value
+        );
+    }
+
+    /**
+     * Reset a queue.
+     *
+     * @param string $queue
+     */
+    public function resetQueue($queue)
+    {
+        $this->queues[$queue] = [];
     }
 
     /**
@@ -300,7 +256,7 @@ class Manager
      */
     public function remove($files)
     {
-        $this->disk->remove($files);
+        $this->getDisk()->remove($files);
     }
 
     /**
@@ -313,7 +269,7 @@ class Manager
      */
     public function move($source, $target)
     {
-        $this->disk->move($source, $target);
+        $this->getDisk()->move($source, $target);
     }
 
     /**
@@ -337,21 +293,29 @@ class Manager
     /**
      * Generates an array of all style urls.
      *
-     * @param bool $skipEmpty
+     * @param bool $skip_empty
+     * @param bool $include_original
      *
-     * @return array
+     * @return array|null
      */
-    public function toArray($skipEmpty = false)
+    public function toArray($skip_empty = false, $include_original = true)
     {
         // Skip when no media
-        if ($skipEmpty === true && $this->hasMedia() === false) {
+        if ($skip_empty === true && $this->hasMedia() === false) {
             return null;
         }
 
         $urls = [];
 
-        foreach ($this->styles as $style) {
-            $urls[$style->name] = $this->url($style->name);
+        foreach ($this->styles as $name => $style) {
+            // Skip the original file
+            if ($include_original === false
+                && $this->config('default_style') === $name
+            ) {
+                continue;
+            }
+
+            $urls[$name] = $this->url($name);
         }
 
         return $urls;
@@ -377,7 +341,7 @@ class Manager
     public function path($styleName = '')
     {
         if ($this->originalFilename()) {
-            return $this->interpolator->interpolate($this->url, $styleName);
+            return $this->getInterpolator()->interpolate($this->url, $styleName);
         }
 
         return '';
@@ -513,15 +477,15 @@ class Manager
             return;
         }
 
-        foreach ($this->styles as $style) {
-            if (!$file = $this->path($style->name)) {
+        foreach ($this->styles as $name => $style) {
+            if (!$file = $this->path($name)) {
                 continue;
             }
 
-            $file = $this->fileManager->make($file);
+            $file = $this->getFileManager()->make($file);
 
-            if ($style->value && $file->isImage()) {
-                $file = $this->resizer->resize(
+            if ($style && $file->isImage()) {
+                $file = $this->getResizer()->resize(
                     $file, $style, $this->convertToPng($file)
                 );
             }
@@ -529,7 +493,7 @@ class Manager
                 $file = $file->getRealPath();
             }
 
-            $filePath = $this->path($style->name);
+            $filePath = $this->path($name);
             $this->move($file, $filePath);
         }
     }
@@ -548,11 +512,12 @@ class Manager
         $this->instance = $instance;
 
         // Get queue file
-        $file = $this->interpolator->interpolate("{$queue_path}/:filename");
+        $file = $this->getInterpolator()->interpolate("{$queue_path}/:filename");
 
-        $this->uploadedFile = $this->fileManager->make($file);
+        $this->uploadedFile = $this->getFileManager()->make($file);
 
-        $this->queueAllForWrite();
+        // Queue all styles for writing
+        $this->setQueue('write', $this->styles);
 
         $this->save();
     }
@@ -569,15 +534,15 @@ class Manager
     }
 
     /**
-     * Process the queuedForWrite que.
+     * Process the queued for writes.
      *
      * @return void
      */
     protected function flushWrites()
     {
-        foreach ($this->queuedForWrite as $style) {
-            if ($style->value && $this->uploadedFile->isImage()) {
-                $file = $this->resizer->resize(
+        foreach ($this->getQueue('write') as $name => $style) {
+            if ($style && $this->uploadedFile->isImage()) {
+                $file = $this->getResizer()->resize(
                     $this->uploadedFile, $style, $this->convertToPng($this->uploadedFile)
                 );
             }
@@ -586,12 +551,12 @@ class Manager
             }
 
             // Only move it real
-            if ($filePath = $this->path($style->name)) {
+            if ($filePath = $this->path($name)) {
                 $this->move($file, $filePath);
             }
         }
 
-        $this->queuedForWrite = [];
+        $this->resetQueue('write');
     }
 
     /**
@@ -601,8 +566,9 @@ class Manager
      */
     protected function flushDeletes()
     {
-        $this->remove($this->queuedForDeletion);
-        $this->queuedForDeletion = [];
+        $this->remove($this->getQueue('deletion'));
+
+        $this->resetQueue('deletion');
     }
 
     /**
@@ -615,22 +581,12 @@ class Manager
     protected function defaultUrl($styleName = '')
     {
         if ($this->default_url) {
-            $url = $this->interpolator->interpolate($this->default_url, $styleName);
+            $url = $this->getInterpolator()->interpolate($this->default_url, $styleName);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
         }
 
         return '';
-    }
-
-    /**
-     * Fill the queuedForWrite que with all of this attachment's styles.
-     *
-     * @return void
-     */
-    protected function queueAllForWrite()
-    {
-        $this->queuedForWrite = $this->styles;
     }
 
     /**
@@ -647,7 +603,7 @@ class Manager
             return $this->path($styleToClear);
         }, $stylesToClear);
 
-        $this->queuedForDeletion = array_merge($this->queuedForDeletion, $filePaths);
+        $this->setQueue('deletion', $filePaths);
     }
 
     /**
@@ -661,14 +617,14 @@ class Manager
             return;
         }
 
-        if (!$this->preserve_files) {
-            $filePaths = array_map(function ($style) {
-                return $this->path($style->name);
-            }, $this->styles);
-
-            $this->queuedForDeletion = array_merge($this->queuedForDeletion, $filePaths);
+        // Remove old files
+        if ($this->config('preserve_files', false) === false) {
+            foreach ($this->styles as $name => $style) {
+                $this->setQueue('deletion', $this->path($name));
+            }
         }
 
+        // Set model attributes
         $this->instanceWrite('file_name', null);
         $this->instanceWrite('file_size', null);
         $this->instanceWrite('content_type', null);
@@ -695,5 +651,84 @@ class Manager
                 $this->instance->setAttribute($fieldName, $value);
             }
         }
+    }
+
+    /**
+     * Get configuration value.
+     *
+     * @param string $key
+     * @param mixed  $default
+     *
+     * @return mixed
+     */
+    public function config($key, $default = null)
+    {
+        return Arr::get($this->config, $key, $default);
+    }
+
+
+    /**
+     * Get the file manager instance.
+     *
+     * @return FileManager
+     */
+    public function getFileManager()
+    {
+        if ($this->fileManagerInstance === null) {
+            $this->fileManagerInstance = new FileManager($this);
+        }
+
+        return $this->fileManagerInstance;
+    }
+
+    /**
+     * Get the interpolator instance.
+     *
+     * @return Interpolator
+     */
+    public function getInterpolator()
+    {
+        return new Interpolator($this);
+    }
+
+    /**
+     * Get the resizer instance.
+     *
+     * @return Resizer
+     */
+    public function getResizer()
+    {
+        $options = [
+            'image_quality' => $this->config('image_quality'),
+            'auto_orient' => $this->config('auto_orient'),
+            'color_palette' => $this->config('color_palette'),
+        ];
+
+        return new Resizer(
+            $this->config('image_processor'), $options
+        );
+    }
+
+    /**
+     * Handle the dynamic setting of attachment options.
+     *
+     * @param string $key
+     * @param mixed  $value
+     */
+    public function __set($key, $value)
+    {
+        Arr::set($this->config, $key, $value);
+    }
+
+    /**
+     * Handle the dynamic retrieval of attachment options.
+     *
+     * @param string $key
+     *
+     * @return mixed
+     */
+    public function __get($key)
+    {
+        return $this->config($key);
     }
 }

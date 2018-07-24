@@ -23,12 +23,19 @@ abstract class AbstractDisk
     public $config;
 
     /**
+     * Filesystem manager instance.
+     *
+     * @var FilesystemManager
+     */
+    public $filesystem;
+
+    /**
      * Constructor method
      *
      * @param Manager           $media
      * @param FilesystemManager $filesystem
      */
-    function __construct(Manager $media, FilesystemManager $filesystem)
+    public function __construct(Manager $media, FilesystemManager $filesystem)
     {
         $this->media = $media;
         $this->filesystem = $filesystem;
@@ -47,7 +54,8 @@ abstract class AbstractDisk
                 $this->filesystem->delete($file);
             }
             catch (Exception $e) {
-            } // Ignore not found exceptions
+                // Ignore not found exceptions
+            }
         }
     }
 

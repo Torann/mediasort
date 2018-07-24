@@ -118,15 +118,13 @@ trait HasMediaTrait
      * @param string $name
      * @param array  $options
      *
-     * @return mixed
+     * @return void
      * @throws Exception
      */
     protected function registerMedia($name, $options)
     {
-        $media = Manager::create($name, $this->mergeOptions($options));
-        $media->setInstance($this);
-
-        $this->mediaFiles[$name] = $media;
+        $this->mediaFiles[$name] = new Manager($name, $this->mergeOptions($options));
+        $this->mediaFiles[$name]->setInstance($this);
     }
 
     /**
@@ -142,8 +140,7 @@ trait HasMediaTrait
      */
     protected function mergeOptions($options)
     {
-        $defaultOptions = config('mediasort', []);
-        $options = array_merge($defaultOptions, (array)$options);
+        $options = array_merge(config('mediasort', []), (array)$options);
         $options['styles'] = array_merge((array)$options['styles'], ['original' => '']);
 
         return $options;
