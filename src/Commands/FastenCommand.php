@@ -60,7 +60,7 @@ class FastenCommand extends Command
      * @return void
      */
     public function fire()
-    {    
+    {
         $this->handle();
     }
 

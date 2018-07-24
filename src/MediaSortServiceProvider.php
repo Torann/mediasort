@@ -69,15 +69,14 @@ class MediaSortServiceProvider extends ServiceProvider
     {
         $this->app->bind('mediasort.fasten', function ($app) {
             return new Commands\FastenCommand(
-                $app['view'],
-                $app['files'],
-                base_path('database/migrations')
+                $app['view'], $app['files']
             );
         });
 
         $this->app->bind('mediasort.refresh', function ($app) {
-            $refreshService = new Services\ImageRefreshService();
-            return new Commands\RefreshCommand($refreshService);
+            return new Commands\RefreshCommand(
+                new Services\ImageRefreshService()
+            );
         });
 
         $this->commands([

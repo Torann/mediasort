@@ -4,6 +4,7 @@ namespace Torann\MediaSort\File\Image;
 
 use Imagine\Image\Box;
 use Imagine\Image\Point;
+use Illuminate\Support\Arr;
 use Imagine\Image\BoxInterface;
 use Imagine\Image\ImageInterface;
 use Imagine\Image\ManipulatorInterface;
@@ -27,50 +28,43 @@ class Resizer
     protected $imagine;
 
     /**
-     * Quality of the saved image.
+     * Resizer options.
      *
-     * @var int
+     * @var array
      */
-    protected $quality;
-
-    /**
-     * Auto-orient images.
-     *
-     * @var bool
-     */
-    protected $auto_orient = false;
+    protected $options = [];
 
     /**
      * Constructor method
      *
      * @param string $image_processor
-     * @param int    $quality
-     * @param bool   $auto_orient
+     * @param array  $options
      *
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    function __construct($image_processor, $quality = 90, $auto_orient = false)
+    public function __construct($image_processor, array $options = [])
     {
-        if (!class_exists($image_processor)) {
+        if (class_exists($image_processor) === false) {
             throw new InvalidClassException('Image processor not found.');
         }
 
         $this->image_processor = $image_processor;
-        $this->quality = $quality;
-        $this->auto_orient = $auto_orient;
+        $this->options = $options;
     }
 
     /**
      * Resize an image using the computed settings.
      *
-     * @param \Torann\MediaSort\File\UploadedFile $file
-     * @param \stdClass                           $style
-     * @param bool                                $convert_to_png
+     * @param UploadedFile $file
+     * @param string       $style
+     * @param bool         $convert_to_png
      *
      * @return string
      */
     public function resize(UploadedFile $file, $style, $convert_to_png = false)
     {
+        $quality = $this->option('quality', 90);
+
         $this->imagine = new $this->image_processor;
 
         $filePath = tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
@@ -78,26 +72,33 @@ class Resizer
         $method = "resize" . ucfirst($option);
 
         // Convert TIFF images into PNG files
+        // TODO: Move to an option
         if ($convert_to_png === true) {
             $filePath = preg_replace('/\.[^.]+$/', '.png', $filePath);
         }
 
         if ($method == 'resizeCustom') {
-            $this->resizeCustom($file, $style->value, $enlarge)
-                ->save($filePath, ['quality' => $this->quality]);
+            $this->resizeCustom($file, $style, $enlarge)
+                ->save($filePath, ['quality' => $quality]);
 
             return $filePath;
         }
 
         $image = $this->imagine->open($file->getRealPath());
 
-        if ($this->auto_orient) {
+        // Orient the file programmatically
+        if ($this->option('auto_orient', false)) {
             $image = $this->autoOrient($file->getRealPath(), $image);
+        }
+
+        // Force a color palette
+        if ($palette = $this->option('color_palette')) {
+            $image->usePalette(new $palette);
         }
 
         $this->$method($image, $width, $height, $enlarge)
             ->save($filePath, [
-                'quality' => $this->quality,
+                'quality' => $quality,
                 'flatten' => false,
             ]);
 
@@ -110,37 +111,37 @@ class Resizer
      * Parse the given style dimensions to extract out the file processing options,
      * perform any necessary image resizing for a given style.
      *
-     * @param \stdClass $style
+     * @param string $style
      *
      * @return array
      */
     protected function parseStyleDimensions($style)
     {
-        if (is_callable($style->value)) {
+        if (is_callable($style) === true) {
             return [null, null, 'custom', false];
         }
 
         $enlarge = true;
 
         // Don't allow the package to enlarge an image
-        if (strpos($style->value, '?') !== false) {
-            $style->value = str_replace('?', '', $style->value);
+        if (strpos($style, '?') !== false) {
+            $style = str_replace('?', '', $style);
             $enlarge = false;
         }
 
-        if (strpos($style->value, 'x') === false) {
+        if (strpos($style, 'x') === false) {
             // Width given, height automatically selected to preserve aspect ratio (landscape).
-            $width = $style->value;
+            $width = $style;
 
             return [$width, null, 'landscape', $enlarge];
         }
 
-        $dimensions = explode('x', $style->value);
+        $dimensions = explode('x', $style);
         $width = $dimensions[0];
         $height = $dimensions[1];
 
         if (empty($width)) {
-            // Height given, width automagically selected to preserve aspect ratio (portrait).
+            // Height given, width automatically selected to preserve aspect ratio (portrait).
             return [null, $height, 'portrait', $enlarge];
         }
 
@@ -410,5 +411,18 @@ class Resizer
         else {
             return $image;
         }
+    }
+
+    /**
+     * Get option value.
+     *
+     * @param string $key
+     * @param mixed  $default
+     *
+     * @return mixed
+     */
+    protected function option($key, $default = null)
+    {
+        return Arr::get($this->options, $key, $default);
     }
 }

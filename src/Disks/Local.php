@@ -13,7 +13,7 @@ class Local extends AbstractDisk
      * @param Manager           $media
      * @param FilesystemManager $filesystem
      */
-    function __construct(Manager $media, FilesystemManager $filesystem)
+    public function __construct(Manager $media, FilesystemManager $filesystem)
     {
         parent::__construct($media, $filesystem);
 

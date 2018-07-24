@@ -2,6 +2,8 @@
 
 namespace Torann\MediaSort;
 
+use Illuminate\Support\Str;
+
 class Interpolator
 {
     /**
@@ -16,7 +18,7 @@ class Interpolator
      *
      * @param \Torann\MediaSort\Manager $manager
      */
-    function __construct(Manager $manager)
+    public function __construct(Manager $manager)
     {
         $this->manager = $manager;
     }
@@ -25,13 +27,13 @@ class Interpolator
      * Interpolate a string.
      *
      * @param string $string
-     * @param string $styleName
+     * @param string $style
      *
      * @return string
      */
-    public function interpolate($string, $styleName = '')
+    public function interpolate($string, $style = '')
     {
-        return preg_replace_callback("/{(([[:alnum:]]|_|\.|-)+)?}/", function ($match) use ($styleName) {
+        return preg_replace_callback("/{(([[:alnum:]]|_|\.|-)+)?}/", function ($match) use ($style) {
             //// Get a value from relationship
             //if (strpos($match[1], '.')) {
             //    list($key, $value) = explode('.', $match[1]);
@@ -43,7 +45,7 @@ class Interpolator
 
             // Is interpolator value?
             if (method_exists($this, $method)) {
-                return $this->$method($styleName);
+                return $this->$method($style);
             }
 
             return $this->getAttribute($match[1]);
@@ -112,19 +114,19 @@ class Interpolator
      */
     protected function getMedia()
     {
-        return str_plural($this->manager->name);
+        return Str::plural($this->manager->name);
     }
 
     /**
      * Returns the style, or the default style if an empty style is supplied.
      *
-     * @param string $styleName
+     * @param string $style
      *
      * @return string
      */
-    protected function getStyle($styleName = '')
+    protected function getStyle($style = '')
     {
-        return $styleName ?: $this->manager->default_style;
+        return $style ?: $this->manager->default_style;
     }
 
     /**
