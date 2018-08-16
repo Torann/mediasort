@@ -2,6 +2,7 @@
 
 namespace Torann\MediaSort;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class Interpolator
@@ -34,21 +35,22 @@ class Interpolator
     public function interpolate($string, $style = '')
     {
         return preg_replace_callback("/{(([[:alnum:]]|_|\.|-)+)?}/", function ($match) use ($style) {
-            //// Get a value from relationship
-            //if (strpos($match[1], '.')) {
-            //    list($key, $value) = explode('.', $match[1]);
-            //    return $this->getAttribute($key)->getAttribute($value);
-            //}
+            $key = $match[1];
 
             // Create local method call.
-            $method = 'get' . studly_case($match[1]);
+            $method = 'get' . studly_case($key);
 
-            // Is interpolator value?
+            // Check for a custom interpolator value.
             if (method_exists($this, $method)) {
                 return $this->$method($style);
             }
 
-            return $this->getAttribute($match[1]);
+            // Check for an interpolator override
+            if ($override = $this->manager->config("interpolate.{$key}")) {
+                return $override;
+            }
+
+            return $this->getAttribute($key);
         }, $string);
     }
 

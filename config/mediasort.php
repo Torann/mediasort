@@ -202,4 +202,16 @@ return [
 
     'model_primary_key' => null,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Interpolation
+    |--------------------------------------------------------------------------
+    |
+    | Use this to override or provide custom variables for use during the URL
+    | interpolation.
+    |
+    */
+
+    'interpolate' => [],
+
 ];
