@@ -67,7 +67,7 @@ class Resizer
 
         $this->imagine = new $this->image_processor;
 
-        $filePath = tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
+        $filePath = @tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
         list($width, $height, $option, $enlarge) = $this->parseStyleDimensions($style);
         $method = "resize" . ucfirst($option);
 

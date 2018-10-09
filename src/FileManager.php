@@ -150,7 +150,7 @@ class FileManager
         $mime = $sizeInfo['mime'];
 
         // Create a file path for the file by storing it on disk.
-        $filePath = tempnam(sys_get_temp_dir(), 'STP');
+        $filePath = @tempnam(sys_get_temp_dir(), 'STP');
         file_put_contents($filePath, $rawFile);
 
         // Get the original filename
