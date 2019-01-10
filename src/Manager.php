@@ -500,30 +500,6 @@ class Manager
     }
 
     /**
-     * Used to manually trigger a processing. Helpful
-     * for delayed upload of large files.
-     *
-     * @param Model  $instance
-     * @param string $queue_path
-     *
-     * @return void
-     */
-    public function processQueue($instance, $queue_path)
-    {
-        $this->instance = $instance;
-
-        // Get queue file
-        $file = $this->getInterpolator()->interpolate("{$queue_path}/:filename");
-
-        $this->uploadedFile = $this->getFileManager()->make($file);
-
-        // Queue all styles for writing
-        $this->setQueue('write', $this->styles);
-
-        $this->save();
-    }
-
-    /**
      * Return the class type of the attachment's underlying
      * model instance.
      *
