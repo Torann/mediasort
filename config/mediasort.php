@@ -63,6 +63,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Loading Url
+    |--------------------------------------------------------------------------
+    |
+    | The url (relative to your project document root) containing a loading image
+    | that will be used for attachments that are flagged as being in processed.
+    */
+
+    'loading_url' => '{app_url}/images/{media}/{style}/loading.gif',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Processing Key
+    |--------------------------------------------------------------------------
+    |
+    | This holds the attribute on the model that indicates if the attachment
+    | is being processed. The attribute needs to be cast as a boolean. If set
+    | to `null` the loading_url will not be used.
+    |
+    */
+
+    'processing_key' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | File visibility
     |--------------------------------------------------------------------------
     |
@@ -113,18 +137,6 @@ return [
     */
 
     'auto_orient' => false,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Convert Tiff Images
-    |--------------------------------------------------------------------------
-    |
-    | Automatically convert TIFF images to PNG. This option works with the
-    | Imagick image processor.
-    |
-    */
-
-    'convert_tiff' => false,
 
     /*
     |--------------------------------------------------------------------------

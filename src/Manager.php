@@ -96,12 +96,6 @@ class Manager
         $filename = $this->uploadedFile->getClientOriginalName();
         $content_type = $this->uploadedFile->getMimeType();
 
-        // Convert image to PNG
-        if ($this->convertToPng($this->uploadedFile)) {
-            $filename = preg_replace('/\.[^.]+$/', '.png', $filename);
-            $content_type = 'image/png';
-        }
-
         // Set model values
         $this->instanceWrite('file_name', $filename);
         $this->instanceWrite('file_size', $this->uploadedFile->getSize());
@@ -148,19 +142,6 @@ class Manager
         }
 
         return $this->diskInstance;
-    }
-
-    /**
-     * Should the image be converted to a PNG file.
-     *
-     * @param UploadedFile $file
-     *
-     * @return bool
-     */
-    protected function convertToPng(UploadedFile $file)
-    {
-        return $this->convert_tiff
-            && in_array(exif_imagetype($file), [IMAGETYPE_TIFF_II, IMAGETYPE_TIFF_MM]);
     }
 
     /**
@@ -281,6 +262,10 @@ class Manager
      */
     public function url($styleName = '')
     {
+        if ($this->isProcessing()) {
+            return $this->loadingUrl($styleName);
+        }
+
         if ($this->originalFilename()) {
             if ($path = $this->path($styleName)) {
                 return $this->prefix_url . $path;
@@ -288,6 +273,23 @@ class Manager
         }
 
         return $this->defaultUrl($styleName);
+    }
+
+    /**
+     * Based on the processing attribute, determine if the
+     * attachement is being processed.
+     *
+     * @return bool
+     */
+    public function isProcessing()
+    {
+        // When empty this feature is turned off
+        if (empty($this->config('processing_key'))) {
+            return false;
+        }
+
+        return $this->instance
+                ->getAttribute($this->config('processing_key')) == true;
     }
 
     /**
@@ -485,9 +487,8 @@ class Manager
             $file = $this->getFileManager()->make($file);
 
             if ($style && $file->isImage()) {
-                $file = $this->getResizer()->resize(
-                    $file, $style, $this->convertToPng($file)
-                );
+                $file = $this->getResizer()
+                    ->resize($file, $style);
             }
             else {
                 $file = $file->getRealPath();
@@ -542,9 +543,8 @@ class Manager
     {
         foreach ($this->getQueue('write') as $name => $style) {
             if ($style && $this->uploadedFile->isImage()) {
-                $file = $this->getResizer()->resize(
-                    $this->uploadedFile, $style, $this->convertToPng($this->uploadedFile)
-                );
+                $file = $this->getResizer()
+                    ->resize($this->uploadedFile, $style);
             }
             else {
                 $file = $this->uploadedFile->getRealPath();
@@ -582,6 +582,24 @@ class Manager
     {
         if ($this->default_url) {
             $url = $this->getInterpolator()->interpolate($this->default_url, $styleName);
+
+            return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
+        }
+
+        return '';
+    }
+
+    /**
+     * Generates the loading url if no file attachment is present.
+     *
+     * @param string $styleName
+     *
+     * @return string
+     */
+    protected function loadingUrl($styleName = '')
+    {
+        if ($this->loading_url) {
+            $url = $this->getInterpolator()->interpolate($this->loading_url, $styleName);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
         }
