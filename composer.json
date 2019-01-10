@@ -1,6 +1,6 @@
 {
   "name": "torann/mediasort",
-  "description": "Simply media manager for Laravel 5 using the builtin Flysystem.",
+  "description": "Simply media manager for Laravel using the builtin Flysystem.",
   "keywords": ["upload", "media", "filesystem", "cloud storage", "file", "paperclip"],
   "license": "BSD-2-Clause",
   "authors": [
