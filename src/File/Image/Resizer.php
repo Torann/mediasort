@@ -57,11 +57,10 @@ class Resizer
      *
      * @param UploadedFile $file
      * @param string       $style
-     * @param bool         $convert_to_png
      *
      * @return string
      */
-    public function resize(UploadedFile $file, $style, $convert_to_png = false)
+    public function resize(UploadedFile $file, $style)
     {
         $quality = $this->option('quality', 90);
 
@@ -70,12 +69,6 @@ class Resizer
         $filePath = @tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
         list($width, $height, $option, $enlarge) = $this->parseStyleDimensions($style);
         $method = "resize" . ucfirst($option);
-
-        // Convert TIFF images into PNG files
-        // TODO: Move to an option
-        if ($convert_to_png === true) {
-            $filePath = preg_replace('/\.[^.]+$/', '.png', $filePath);
-        }
 
         if ($method == 'resizeCustom') {
             $this->resizeCustom($file, $style, $enlarge)

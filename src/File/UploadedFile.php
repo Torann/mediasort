@@ -17,8 +17,6 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
         'jpg' => ['image/jpeg', 'image/pjpeg'],
         'jpe' => ['image/jpeg', 'image/pjpeg'],
         'png' => 'image/png',
-        'tiff' => 'image/tiff',
-        'tif' => 'image/tiff',
     ];
 
     /**
