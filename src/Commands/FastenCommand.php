@@ -74,7 +74,7 @@ class FastenCommand extends Command
         $data = [
             'table' => $this->argument('table'),
             'attachment' => $this->argument('attachment'),
-            'after' => $this->argument('after')
+            'after' => $this->argument('after'),
         ];
 
         // Create filename

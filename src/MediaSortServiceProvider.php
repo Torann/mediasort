@@ -41,7 +41,7 @@ class MediaSortServiceProvider extends ServiceProvider
     {
         $this->mediaSortNull = sha1(time());
 
-        if (!defined('MEDIASORT_NULL')) {
+        if (defined('MEDIASORT_NULL') === false) {
             define('MEDIASORT_NULL', $this->mediaSortNull);
         }
     }

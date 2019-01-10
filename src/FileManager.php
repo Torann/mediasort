@@ -74,7 +74,7 @@ class FileManager
 
         $uploadFile = new UploadedFile($path, $originalName, $mimeType, $size, $error);
 
-        if (!$uploadFile->isValid()) {
+        if ($uploadFile->isValid() === false) {
             throw new FileException($uploadFile->getErrorMessage($uploadFile->getError()));
         }
 
@@ -157,7 +157,7 @@ class FileManager
         $name = strtok(pathinfo($file, PATHINFO_BASENAME), '?');
 
         // Append missing file extension
-        if (!pathinfo($file, PATHINFO_EXTENSION)) {
+        if (empty(pathinfo($file, PATHINFO_EXTENSION))) {
             $name = $name . '.' . $this->getExtension($mime);
         }
 

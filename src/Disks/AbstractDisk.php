@@ -71,9 +71,7 @@ abstract class AbstractDisk
     {
         // Save file
         $this->filesystem->put(
-            $target,
-            file_get_contents($source),
-            $this->media->visibility
+            $target, file_get_contents($source), $this->media->visibility
         );
     }
 }

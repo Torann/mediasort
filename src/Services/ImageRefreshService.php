@@ -16,8 +16,8 @@ class ImageRefreshService
      */
     public function refresh($class, $media)
     {
-        if (!method_exists($class, 'hasMediaFile')) {
-            throw new InvalidClassException("Invalid class: the $class class is not currently using MediaSort.", 1);
+        if (method_exists($class, 'hasMediaFile') === false) {
+            throw new InvalidClassException("Invalid class: the {$class} class is not currently using MediaSort.", 1);
         }
 
         // Get model

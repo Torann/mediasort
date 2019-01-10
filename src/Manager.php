@@ -405,6 +405,7 @@ class Manager
     public function beforeDelete($instance)
     {
         $this->instance = $instance;
+
         $this->clear();
     }
 
@@ -418,6 +419,7 @@ class Manager
     public function afterDelete($instance)
     {
         $this->instance = $instance;
+
         $this->flushDeletes();
     }
 
@@ -432,6 +434,7 @@ class Manager
     public function destroy($stylesToClear = [])
     {
         $this->clear($stylesToClear);
+
         $this->save();
     }
 
@@ -461,7 +464,7 @@ class Manager
      */
     public function save()
     {
-        if (!$this->keep_old_files) {
+        if ($this->config('keep_old_files', false) === false) {
             $this->flushDeletes();
         }
 
@@ -475,12 +478,12 @@ class Manager
      */
     public function reprocess()
     {
-        if (!$this->originalFilename()) {
+        if (empty($this->originalFilename())) {
             return;
         }
 
         foreach ($this->styles as $name => $style) {
-            if (!$file = $this->path($name)) {
+            if (empty($file = $this->path($name))) {
                 continue;
             }
 
@@ -607,7 +610,7 @@ class Manager
      */
     protected function queueAllForDeletion()
     {
-        if (!$this->originalFilename()) {
+        if (empty($this->originalFilename())) {
             return;
         }
 
@@ -659,7 +662,6 @@ class Manager
     {
         return Arr::get($this->config, $key, $default);
     }
-
 
     /**
      * Get the file manager instance.
