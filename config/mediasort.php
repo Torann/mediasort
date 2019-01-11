@@ -74,16 +74,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Processing Key
+    | Queueable
     |--------------------------------------------------------------------------
     |
-    | This holds the attribute on the model that indicates if the attachment
-    | is being processed. The attribute needs to be cast as a boolean. If set
-    | to `null` the loading_url will not be used.
+    | This indicates if the attachement is queueable. If queuable the model
+    | needs to include the column to indicate this, the format for such column
+    | would be `<style>_queue_state`. The state values can be found as constants
+    | on \Torann\MediaSort\Manager
+    |
+    | Queue States:
+    |
+    | - Manager::QUEUE_DONE = the attachment has been processed
+    | - Manager::QUEUE_WAITING = the attachment in queue for processing
+    | - Manager::QUEUE_WORKING = the attachment is being processed
     |
     */
 
-    'processing_key' => null,
+    'queueable' => false,
+
+    /*
+	|--------------------------------------------------------------------------
+	| File Queue Path
+	|--------------------------------------------------------------------------
+	|
+	| Used to temporarily store large files for queuing. It is composed of
+    | 'interpolations' that will be replaced their corresponding values
+    | during runtime.
+	|
+	*/
+
+	'queue_path' => '{laravel_root}/uploads/queue',
 
     /*
     |--------------------------------------------------------------------------

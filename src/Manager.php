@@ -6,12 +6,16 @@ use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
-use Torann\MediaSort\File\UploadedFile;
 use Torann\MediaSort\File\Image\Resizer;
 use Torann\MediaSort\Exceptions\InvalidClassException;
 
 class Manager
 {
+    // Queued states
+    const QUEUE_DONE = 1;
+    const QUEUE_WAITING = 2;
+    const QUEUE_WORKING = 3;
+
     /**
      * Media identifier.
      *
@@ -71,26 +75,99 @@ class Manager
     public function __construct($name, array $config)
     {
         $this->name = $name;
+
         $this->setConfig($config);
     }
 
     /**
      * Mutator method for the uploadedFile property.
      *
-     * @param mixed  $uploadedFile
-     * @param string $styleName
+     * @param mixed $file
      *
      * @return void
      */
-    public function setUploadedFile($uploadedFile, $styleName)
+    public function setUploadedFile($file)
     {
-        $this->clear();
+        // If set, this just clears the image.
+        if ($file == MEDIASORT_NULL) {
+            $this->clear();
 
-        if ($uploadedFile == MEDIASORT_NULL) {
             return;
         }
 
-        $this->uploadedFile = $this->getFileManager()->make($uploadedFile);
+        // Determine if this attachment should be processed
+        // now or later using queued job.
+        if ($this->isQueueable()) {
+            $this->queueUploadedFile($file);
+        }
+
+        // Standard upload, nothing fancy here.
+        else {
+            $this->addUploadedFile($file);
+        }
+    }
+
+    /**
+     * Mutator method for the uploadedFile property.
+     *
+     * @param mixed $file
+     *
+     * @return void
+     */
+    protected function queueUploadedFile($file)
+    {
+        // Get the real path of the file
+        $file = $this->getFileManager()
+            ->make($file)
+            ->getRealPath();
+
+        // Create the unique directory name and file to save into
+        $file_target = $this->joinPaths(
+            str_replace('.', '-', uniqid(rand(), true)),
+            basename($file)
+        );
+
+        // Parse the queue path
+        $queue_path = $this->getInterpolator()->interpolate(
+            $this->config('queue_path')
+        );
+
+        // Determine if the path is locale and just simple move it,
+        // otherwise use the disk driver to move the attachment.
+        if ($local_path = realpath($queue_path)) {
+            $target = $this->joinPaths($local_path, $file_target);
+
+            // Ensure the target directory exists
+            if (is_dir(dirname($target)) === false) {
+                mkdir(dirname($target), 0777, true);
+            }
+
+            // Move the file
+            rename($file, $target);
+        }
+        else {
+            $this->move(
+                $file, $this->joinPaths($queue_path, $file_target)
+            );
+        }
+
+        // Save the information for later
+        $this->instanceWrite('queue_state', self::QUEUE_WAITING);
+        $this->instanceWrite('queued_file', $file_target);
+    }
+
+    /**
+     * Mutator method for the uploadedFile property.
+     *
+     * @param mixed $file
+     *
+     * @return void
+     */
+    protected function addUploadedFile($file)
+    {
+        $this->clear();
+
+        $this->uploadedFile = $this->getFileManager()->make($file);
 
         // Get the original values
         $filename = $this->uploadedFile->getClientOriginalName();
@@ -101,6 +178,7 @@ class Manager
         $this->instanceWrite('file_size', $this->uploadedFile->getSize());
         $this->instanceWrite('content_type', $content_type);
         $this->instanceWrite('updated_at', date('Y-m-d H:i:s'));
+        $this->instanceWrite('queued_file', null);
 
         // Queue all styles for writing
         $this->setQueue('write', $this->styles);
@@ -262,13 +340,13 @@ class Manager
      */
     public function url($styleName = '')
     {
-        if ($this->isProcessing()) {
+        if ($this->isQueued()) {
             return $this->loadingUrl($styleName);
         }
 
-        if ($this->originalFilename()) {
+        if ($this->getAttribute('filename')) {
             if ($path = $this->path($styleName)) {
-                return $this->prefix_url . $path;
+                return $this->config('prefix_url') . $path;
             }
         }
 
@@ -276,20 +354,27 @@ class Manager
     }
 
     /**
-     * Based on the processing attribute, determine if the
-     * attachement is being processed.
+     * Determine if the attachement is queueable.
      *
      * @return bool
      */
-    public function isProcessing()
+    public function isQueueable()
     {
-        // When empty this feature is turned off
-        if (empty($this->config('processing_key'))) {
-            return false;
+        return $this->config('queueable', false) == true;
+    }
+
+    /**
+     * Determine if the attachment is beng processed.
+     *
+     * @return bool
+     */
+    public function isQueued()
+    {
+        if ($this->isQueueable()) {
+            return $this->getAttribute('queue_state') != self::QUEUE_DONE;
         }
 
-        return $this->instance
-                ->getAttribute($this->config('processing_key')) == true;
+        return false;
     }
 
     /**
@@ -310,7 +395,6 @@ class Manager
         $urls = [];
 
         foreach ($this->styles as $name => $style) {
-            // Skip the original file
             if ($include_original === false
                 && $this->config('default_style') === $name
             ) {
@@ -330,7 +414,7 @@ class Manager
      */
     public function hasMedia()
     {
-        return ($this->originalFilename() && $this->path());
+        return ($this->getAttribute('filename') && $this->path());
     }
 
     /**
@@ -342,7 +426,7 @@ class Manager
      */
     public function path($styleName = '')
     {
-        if ($this->originalFilename()) {
+        if ($this->getAttribute('filename')) {
             return $this->getInterpolator()->interpolate($this->url, $styleName);
         }
 
@@ -350,14 +434,43 @@ class Manager
     }
 
     /**
+     * Return the attachment attribute value.
+     *
+     * @param string $key
+     *
+     * @return mixed
+     */
+    public function getAttribute($key)
+    {
+        // Sanitize the key
+        $key = preg_replace('/^_/', '', $key);
+
+        // Decoder ring for legacy keys
+        switch ($key) {
+            case 'size':
+                $key = 'file_size';
+                break;
+            case 'filename':
+            case 'original_filename':
+                $key = 'file_name';
+                break;
+        }
+
+        return $this->getInstance()
+            ->getAttribute("{$this->name}_{$key}");
+    }
+
+    /**
      * Returns the content type of the file as originally assigned to this attachment's model.
      * Lives in the <attachment>_content_type attribute of the model.
      *
      * @return string
+     *
+     * @deprecated Use getAttribute() instead
      */
     public function contentType()
     {
-        return $this->instance->getAttribute("{$this->name}_content_type");
+        return $this->getAttribute('content_type');
     }
 
     /**
@@ -365,10 +478,25 @@ class Manager
      * Lives in the <attachment>_file_size attribute of the model.
      *
      * @return integer
+     *
+     * @deprecated Use getAttribute() instead
      */
     public function size()
     {
-        return $this->instance->getAttribute("{$this->name}_file_size");
+        return $this->getAttribute('file_size');
+    }
+
+    /**
+     * Returns the size of the file as originally assigned to this attachment's model.
+     * Lives in the <attachment>_file_size attribute of the model.
+     *
+     * @return integer
+     *
+     * @deprecated Use getAttribute() instead
+     */
+    public function queueState()
+    {
+        return $this->getAttribute('queue_state');
     }
 
     /**
@@ -376,10 +504,41 @@ class Manager
      * Lives in the <attachment>_file_name attribute of the model.
      *
      * @return string
+     *
+     * @deprecated Use getAttribute() instead
      */
     public function originalFilename()
     {
-        return $this->instance->getAttribute("{$this->name}_file_name");
+        return $this->getAttribute('file_name');
+    }
+
+    /**
+     * Get the queued file path.
+     *
+     * @return string
+     */
+    public function getQueuedFilePath()
+    {
+        return $this->getInterpolator()->interpolate(
+            $this->joinPaths(
+                $this->config('queue_path'),
+                $this->getAttribute('queued_file')
+            )
+        );
+    }
+
+    /**
+     * Process the write queue.
+     *
+     * @param Model $instance
+     *
+     * @return void
+     */
+    public function beforeSave($instance)
+    {
+        $this->setInstance($instance);
+
+        $this->save();
     }
 
     /**
@@ -391,7 +550,8 @@ class Manager
      */
     public function afterSave($instance)
     {
-        $this->instance = $instance;
+        $this->setInstance($instance);
+
         $this->save();
     }
 
@@ -404,7 +564,7 @@ class Manager
      */
     public function beforeDelete($instance)
     {
-        $this->instance = $instance;
+        $this->setInstance($instance);
 
         $this->clear();
     }
@@ -418,7 +578,7 @@ class Manager
      */
     public function afterDelete($instance)
     {
-        $this->instance = $instance;
+        $this->setInstance($instance);
 
         $this->flushDeletes();
     }
@@ -427,13 +587,13 @@ class Manager
      * Destroys the attachment.  Has the same effect as previously assigning
      * MEDIASORT_NULL to the attachment and then saving.
      *
-     * @param array $stylesToClear
+     * @param array $styles
      *
      * @return void
      */
-    public function destroy($stylesToClear = [])
+    public function destroy($styles = [])
     {
-        $this->clear($stylesToClear);
+        $this->clear($styles);
 
         $this->save();
     }
@@ -442,14 +602,14 @@ class Manager
      * Clears out the attachment.  Has the same effect as previously assigning
      * MEDIASORT_NULL to the attachment.  Does not save the associated model.
      *
-     * @param array $stylesToClear
+     * @param array $styles
      *
      * @return void
      */
-    public function clear($stylesToClear = [])
+    public function clear(array $styles = [])
     {
-        if ($stylesToClear) {
-            $this->queueSomeForDeletion($stylesToClear);
+        if ($styles) {
+            $this->queueSomeForDeletion($styles);
         }
         else {
             $this->queueAllForDeletion();
@@ -478,7 +638,7 @@ class Manager
      */
     public function reprocess()
     {
-        if (empty($this->originalFilename())) {
+        if (empty($this->getAttribute('filename'))) {
             return;
         }
 
@@ -503,6 +663,32 @@ class Manager
     }
 
     /**
+     * Trigger queued files for processing.
+     *
+     * @param Model  $instance
+     * @param string $path
+     *
+     * @return void
+     */
+    public function processQueue($instance, $path = null)
+    {
+        $this->setInstance($instance);
+
+        // Set the file for processing
+        $this->addUploadedFile(
+            $path ?: $this->getQueuedFilePath()
+        );
+
+        // Start processing the file
+        $this->save();
+
+        // Save all updated model attributes
+        $this->getInstance()->save();
+
+        // TODO: Remove TMP dir/file
+    }
+
+    /**
      * Return the class type of the attachment's underlying
      * model instance.
      *
@@ -510,7 +696,7 @@ class Manager
      */
     public function getInstanceClass()
     {
-        return get_class($this->instance);
+        return get_class($this->getInstance());
     }
 
     /**
@@ -520,6 +706,14 @@ class Manager
      */
     protected function flushWrites()
     {
+        // Skip this if there is no queued write items
+        if (count($this->getQueue('write')) === 0) {
+            return;
+        }
+
+        // Update the state of the queued attachment
+        $this->updateQueueState(self::QUEUE_WORKING);
+
         foreach ($this->getQueue('write') as $name => $style) {
             if ($style && $this->uploadedFile->isImage()) {
                 $file = $this->getResizer()
@@ -536,6 +730,48 @@ class Manager
         }
 
         $this->resetQueue('write');
+
+        // Update the state of the queued attachment
+        $this->updateQueueState(self::QUEUE_DONE);
+    }
+
+    /**
+     * Get queue state text.
+     *
+     * @return string
+     */
+    public function getQueuedStateText()
+    {
+        switch ((int)$this->getAttribute('queue_state')) {
+            case self::QUEUE_DONE:
+                return 'done';
+            case self::QUEUE_WAITING:
+                return 'waiting';
+            case self::QUEUE_WORKING:
+                return 'working';
+            default:
+                return 'unknown';
+        }
+    }
+
+    /**
+     * Use the model's connecting and table to quickly update the queue state and
+     * bypass the save event in the model to prevent an event loop.
+     *
+     * @param int $state
+     *
+     * @return void
+     */
+    public function updateQueueState(int $state)
+    {
+        if ($this->isQueueable()) {
+            $this->getInstance()
+                ->getConnection()
+                ->table($this->getInstance()->getTable())
+                ->update([
+                    "{$this->name}_queue_state" => $state,
+                ]);
+        }
     }
 
     /**
@@ -559,10 +795,10 @@ class Manager
      */
     protected function defaultUrl($styleName = '')
     {
-        if ($this->default_url) {
-            $url = $this->getInterpolator()->interpolate($this->default_url, $styleName);
+        if ($this->config('default_url')) {
+            $url = $this->getInterpolator()->interpolate($this->config('default_url'), $styleName);
 
-            return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
+            return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
         }
 
         return '';
@@ -577,10 +813,10 @@ class Manager
      */
     protected function loadingUrl($styleName = '')
     {
-        if ($this->loading_url) {
-            $url = $this->getInterpolator()->interpolate($this->loading_url, $styleName);
+        if ($this->config('loading_url')) {
+            $url = $this->getInterpolator()->interpolate($this->config('loading_url'), $styleName);
 
-            return parse_url($url, PHP_URL_HOST) ? $url : $this->prefix_url . $url;
+            return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
         }
 
         return '';
@@ -590,15 +826,15 @@ class Manager
      * Add a subset (filtered via style) of the uploaded files for this attachment
      * to the queuedForDeletion queue.
      *
-     * @param array $stylesToClear
+     * @param array $styles
      *
      * @return void
      */
-    protected function queueSomeForDeletion($stylesToClear)
+    protected function queueSomeForDeletion($styles)
     {
-        $filePaths = array_map(function ($styleToClear) {
-            return $this->path($styleToClear);
-        }, $stylesToClear);
+        $filePaths = array_map(function ($style) {
+            return $this->path($style);
+        }, $styles);
 
         $this->setQueue('deletion', $filePaths);
     }
@@ -610,7 +846,7 @@ class Manager
      */
     protected function queueAllForDeletion()
     {
-        if (empty($this->originalFilename())) {
+        if (empty($this->getAttribute('filename'))) {
             return;
         }
 
@@ -626,6 +862,8 @@ class Manager
         $this->instanceWrite('file_size', null);
         $this->instanceWrite('content_type', null);
         $this->instanceWrite('updated_at', null);
+        $this->instanceWrite('queue_state', self::QUEUE_DONE);
+        $this->instanceWrite('queued_file', null);
     }
 
     /**
@@ -638,14 +876,24 @@ class Manager
      */
     protected function instanceWrite($property, $value)
     {
-        $fieldName = "{$this->name}_{$property}";
+        $field = "{$this->name}_{$property}";
 
+        // This is not fillable as it is the one required attribute
         if ($property === 'file_name') {
-            $this->instance->setAttribute($fieldName, $value);
+            $this->getInstance()->setAttribute($field, $value);
         }
+
+        // Queue state is optional and outside of the fillable
+        else if (preg_match('/^queue(d?)_/', $property)) {
+            if ($this->isQueueable()) {
+                $this->getInstance()->setAttribute($field, $value);
+            }
+        }
+
+        // All other attributes must be fillable to have their values set
         else {
-            if (in_array($fieldName, $this->instance->getFillable())) {
-                $this->instance->setAttribute($fieldName, $value);
+            if (in_array($field, $this->getInstance()->getFillable())) {
+                $this->getInstance()->setAttribute($field, $value);
             }
         }
     }
@@ -703,6 +951,18 @@ class Manager
         return new Resizer(
             $this->config('image_processor'), $options
         );
+    }
+
+    /**
+     * Transform an array into path.
+     *
+     * @param mixed $args
+     *
+     * @return string
+     */
+    protected function joinPaths(...$args)
+    {
+        return rtrim(preg_replace('/\/{2,}/', '/', join('/', $args)), '/');
     }
 
     /**
