@@ -74,6 +74,34 @@ trait HasMediaTrait
     }
 
     /**
+     * Determine if there are any attachments queued for processing.
+     *
+     * @return bool
+     */
+    public function hasQueuedAttachments()
+    {
+        return count($this->getQueuedAttachments()) > 0;
+    }
+
+    /**
+     * Return all queued attachments that need processing.
+     *
+     * @return array
+     */
+    public function getQueuedAttachments()
+    {
+        $queued = [];
+
+        foreach ($this->mediaFiles as $name => $attachment) {
+            if ($attachment->isQueued()) {
+                $queued[$name] = $attachment;
+            }
+        }
+
+        return $queued;
+    }
+
+    /**
      * Handle the dynamic retrieval of media items.
      *
      * @param string $key
@@ -101,8 +129,8 @@ trait HasMediaTrait
     {
         if (array_key_exists($key, $this->mediaFiles)) {
             if ($value) {
-                $mediaFile = $this->mediaFiles[$key];
-                $mediaFile->setUploadedFile($value, $key);
+                $this->mediaFiles[$key]
+                    ->setUploadedFile($value, $key);
             }
 
             return $this;
