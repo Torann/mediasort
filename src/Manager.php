@@ -42,7 +42,7 @@ class Manager
      *
      * @var \Torann\MediaSort\File\UploadedFile
      */
-    protected $uploadedFile;
+    protected $uploaded_file;
 
     /**
      * An FileManager instance for converting file input formats (Symfony uploaded file object
@@ -50,14 +50,14 @@ class Manager
      *
      * @var \Torann\MediaSort\FileManager
      */
-    protected $fileManagerInstance;
+    protected $file_manager_instance;
 
     /**
      * An instance of the disk.
      *
      * @var \Torann\MediaSort\Disks\AbstractDisk.
      */
-    protected $diskInstance;
+    protected $disk_instance;
 
     /**
      * Queue used for various file processing.
@@ -167,15 +167,15 @@ class Manager
     {
         $this->clear();
 
-        $this->uploadedFile = $this->getFileManager()->make($file);
+        $this->uploaded_file = $this->getFileManager()->make($file);
 
         // Get the original values
-        $filename = $this->uploadedFile->getClientOriginalName();
-        $content_type = $this->uploadedFile->getMimeType();
+        $filename = $this->uploaded_file->getClientOriginalName();
+        $content_type = $this->uploaded_file->getMimeType();
 
         // Set model values
         $this->instanceWrite('file_name', $filename);
-        $this->instanceWrite('file_size', $this->uploadedFile->getSize());
+        $this->instanceWrite('file_size', $this->uploaded_file->getSize());
         $this->instanceWrite('content_type', $content_type);
         $this->instanceWrite('updated_at', date('Y-m-d H:i:s'));
         $this->instanceWrite('queued_file', null);
@@ -206,7 +206,7 @@ class Manager
      */
     public function getDisk()
     {
-        if ($this->diskInstance === null) {
+        if ($this->disk_instance === null) {
             // Create disk class
             $class = "\\Torann\\MediaSort\\Disks\\" . ucfirst($this->config('disk'));
 
@@ -216,10 +216,10 @@ class Manager
             }
 
             // Create disk instance
-            $this->diskInstance = Container::getInstance()->makeWith($class, ['media' => $this]);
+            $this->disk_instance = Container::getInstance()->makeWith($class, ['media' => $this]);
         }
 
-        return $this->diskInstance;
+        return $this->disk_instance;
     }
 
     /**
@@ -265,7 +265,9 @@ class Manager
         }
 
         // Set media disk
-        $this->config['disk'] = Arr::get($this->config, 'disk', config('filesystems.default', 'local'));
+        $this->config['disk'] = Arr::get(
+            $this->config, 'disk', config('filesystems.default', 'local')
+        );
     }
 
     /**
@@ -320,6 +322,7 @@ class Manager
 
     /**
      * Move an uploaded file to it's intended destination.
+     *
      * The file can be an actual uploaded file object or the path to
      * a resized image file on disk.
      *
@@ -334,23 +337,23 @@ class Manager
     /**
      * Generates the url to a file upload.
      *
-     * @param string $styleName
+     * @param string $style
      *
      * @return string
      */
-    public function url($styleName = '')
+    public function url($style = '')
     {
         if ($this->isQueued()) {
-            return $this->loadingUrl($styleName);
+            return $this->loadingUrl($style);
         }
 
         if ($this->getAttribute('filename')) {
-            if ($path = $this->path($styleName)) {
+            if ($path = $this->path($style)) {
                 return $this->config('prefix_url') . $path;
             }
         }
 
-        return $this->defaultUrl($styleName);
+        return $this->defaultUrl($style);
     }
 
     /**
@@ -420,14 +423,14 @@ class Manager
     /**
      * Generates the filesystem path to an uploaded file.
      *
-     * @param string $styleName
+     * @param string $style
      *
      * @return string
      */
-    public function path($styleName = '')
+    public function path($style = '')
     {
         if ($this->getAttribute('filename')) {
-            return $this->getInterpolator()->interpolate($this->url, $styleName);
+            return $this->getInterpolator()->interpolate($this->url, $style);
         }
 
         return '';
@@ -667,17 +670,19 @@ class Manager
      *
      * @param Model  $instance
      * @param string $path
+     * @param bool   $cleanup
      *
      * @return void
      */
-    public function processQueue($instance, $path = null)
+    public function processQueue(Model $instance, $path = null, bool $cleanup = true)
     {
         $this->setInstance($instance);
 
+        // Determine the path to use
+        $path = $path ?: $this->getQueuedFilePath();
+
         // Set the file for processing
-        $this->addUploadedFile(
-            $path ?: $this->getQueuedFilePath()
-        );
+        $this->addUploadedFile($path);
 
         // Start processing the file
         $this->save();
@@ -685,7 +690,12 @@ class Manager
         // Save all updated model attributes
         $this->getInstance()->save();
 
-        // TODO: Remove TMP dir/file
+        // TODO: also remove non-local files
+        // Remove queued file locally
+        if ($cleanup === true && realpath($path) !== false) {
+            @unlink($path);
+            @rmdir(dirname($path));
+        }
     }
 
     /**
@@ -715,12 +725,12 @@ class Manager
         $this->updateQueueState(self::QUEUE_WORKING);
 
         foreach ($this->getQueue('write') as $name => $style) {
-            if ($style && $this->uploadedFile->isImage()) {
+            if ($style && $this->uploaded_file->isImage()) {
                 $file = $this->getResizer()
-                    ->resize($this->uploadedFile, $style);
+                    ->resize($this->uploaded_file, $style);
             }
             else {
-                $file = $this->uploadedFile->getRealPath();
+                $file = $this->uploaded_file->getRealPath();
             }
 
             // Only move it real
@@ -789,14 +799,14 @@ class Manager
     /**
      * Generates the default url if no file attachment is present.
      *
-     * @param string $styleName
+     * @param string $style
      *
      * @return string
      */
-    protected function defaultUrl($styleName = '')
+    protected function defaultUrl($style = '')
     {
         if ($this->config('default_url')) {
-            $url = $this->getInterpolator()->interpolate($this->config('default_url'), $styleName);
+            $url = $this->getInterpolator()->interpolate($this->config('default_url'), $style);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
         }
@@ -807,14 +817,15 @@ class Manager
     /**
      * Generates the loading url if no file attachment is present.
      *
-     * @param string $styleName
+     * @param string $style
      *
      * @return string
      */
-    protected function loadingUrl($styleName = '')
+    protected function loadingUrl($style = '')
     {
         if ($this->config('loading_url')) {
-            $url = $this->getInterpolator()->interpolate($this->config('loading_url'), $styleName);
+            $url = $this->getInterpolator()
+                ->interpolate($this->config('loading_url'), $style);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
         }
@@ -918,11 +929,11 @@ class Manager
      */
     public function getFileManager()
     {
-        if ($this->fileManagerInstance === null) {
-            $this->fileManagerInstance = new FileManager($this);
+        if ($this->file_manager_instance === null) {
+            $this->file_manager_instance = new FileManager($this);
         }
 
-        return $this->fileManagerInstance;
+        return $this->file_manager_instance;
     }
 
     /**
