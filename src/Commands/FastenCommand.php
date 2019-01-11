@@ -17,7 +17,7 @@ class FastenCommand extends Command
     protected $signature = 'media:fasten
                                 {table : The name of the database table the file fields will be added to.}
                                 {attachment : The name of the corresponding MediaSort attachment.}
-                                {after? : Name of a database field after which the file fields will get added.}';
+                                {--queueable : Attachement will support queueing.}';
 
     /**
      * The console command description.
@@ -74,7 +74,7 @@ class FastenCommand extends Command
         $data = [
             'table' => $this->argument('table'),
             'attachment' => $this->argument('attachment'),
-            'after' => $this->argument('after'),
+            'queueable' => $this->option('queueable'),
         ];
 
         // Create filename
