@@ -61,7 +61,17 @@ class Interpolator
      */
     protected function getFilename()
     {
-        return $this->manager->originalFilename();
+        return $this->manager->getAttribute('filename');
+    }
+
+    /**
+     * Returns the queue state test.
+     *
+     * @return string
+     */
+    protected function getQueueState()
+    {
+        return $this->manager->getQueuedStateText();
     }
 
     /**
@@ -81,7 +91,7 @@ class Interpolator
      */
     protected function getBasename()
     {
-        return pathinfo($this->manager->originalFilename(), PATHINFO_FILENAME);
+        return pathinfo($this->getFilename(), PATHINFO_FILENAME);
     }
 
     /**
@@ -91,7 +101,7 @@ class Interpolator
      */
     protected function getExtension()
     {
-        return pathinfo($this->manager->originalFilename(), PATHINFO_EXTENSION);
+        return pathinfo($this->getFilename(), PATHINFO_EXTENSION);
     }
 
     /**
@@ -101,7 +111,7 @@ class Interpolator
      */
     protected function getId()
     {
-        if ($key = $this->manager->model_primary_key) {
+        if ($key = $this->manager->config('model_primary_key')) {
             return $this->manager->getInstance()->{$key};
         }
 
@@ -128,7 +138,7 @@ class Interpolator
      */
     protected function getStyle($style = '')
     {
-        return $style ?: $this->manager->default_style;
+        return $style ?: $this->manager->config('default_style');
     }
 
     /**
