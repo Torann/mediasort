@@ -12,16 +12,16 @@ trait HasMediaTrait
      *
      * @var array
      */
-    protected $mediaFiles = [];
+    protected $media_files = [];
 
     /**
-     * Accessor method for the $mediaFiles property.
+     * Accessor method for the $media_files property.
      *
      * @return array
      */
     public function getMediaFiles()
     {
-        return $this->mediaFiles;
+        return $this->media_files;
     }
 
     /**
@@ -51,14 +51,14 @@ trait HasMediaTrait
     public static function bootHasMediaTrait()
     {
         static::saved(function ($instance) {
-            foreach ($instance->mediaFiles as $mediaFile) {
+            foreach ($instance->getMediaFiles() as $mediaFile) {
                 $mediaFile->afterSave($instance);
             }
         });
 
         static::deleting(function ($instance) {
             if ($instance->canDeleteMedia()) {
-                foreach ($instance->mediaFiles as $mediaFile) {
+                foreach ($instance->getMediaFiles() as $mediaFile) {
                     $mediaFile->beforeDelete($instance);
                 }
             }
@@ -66,7 +66,7 @@ trait HasMediaTrait
 
         static::deleted(function ($instance) {
             if ($instance->canDeleteMedia()) {
-                foreach ($instance->mediaFiles as $mediaFile) {
+                foreach ($instance->getMediaFiles() as $mediaFile) {
                     $mediaFile->afterDelete($instance);
                 }
             }
@@ -92,7 +92,7 @@ trait HasMediaTrait
     {
         $queued = [];
 
-        foreach ($this->mediaFiles as $name => $attachment) {
+        foreach ($this->getMediaFiles() as $name => $attachment) {
             if ($attachment->isQueued()) {
                 $queued[$name] = $attachment;
             }
@@ -110,8 +110,8 @@ trait HasMediaTrait
      */
     public function getAttribute($key)
     {
-        if (array_key_exists($key, $this->mediaFiles)) {
-            return $this->mediaFiles[$key];
+        if (array_key_exists($key, $this->getMediaFiles())) {
+            return $this->media_files[$key];
         }
 
         return parent::getAttribute($key);
@@ -127,9 +127,9 @@ trait HasMediaTrait
      */
     public function setAttribute($key, $value)
     {
-        if (array_key_exists($key, $this->mediaFiles)) {
+        if (array_key_exists($key, $this->getMediaFiles())) {
             if ($value) {
-                $this->mediaFiles[$key]
+                $this->media_files[$key]
                     ->setUploadedFile($value, $key);
             }
 
@@ -151,8 +151,8 @@ trait HasMediaTrait
      */
     protected function registerMedia($name, $options)
     {
-        $this->mediaFiles[$name] = new Manager($name, $this->mergeOptions($options));
-        $this->mediaFiles[$name]->setInstance($this);
+        $this->media_files[$name] = new Manager($name, $this->mergeOptions($options));
+        $this->media_files[$name]->setInstance($this);
     }
 
     /**

@@ -10,7 +10,7 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
      *
      * @var array
      */
-    protected $imageMimes = [
+    protected $image_mimes = [
         'bmp' => 'image/bmp',
         'gif' => 'image/gif',
         'jpeg' => ['image/jpeg', 'image/pjpeg'],
@@ -28,11 +28,11 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
     {
         $mime = $this->getMimeType();
 
-        // The $imageMimes property contains an array of file extensions and
+        // The $image_mimes property contains an array of file extensions and
         // their associated MIME types. We will loop through them and look for
         // the MIME type of the current UploadedFile.
-        foreach ($this->imageMimes as $imageMime) {
-            if (in_array($mime, (array)$imageMime)) {
+        foreach ($this->image_mimes as $image_mime) {
+            if (in_array($mime, (array)$image_mime)) {
                 return true;
             }
         }
@@ -61,10 +61,10 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
             UPLOAD_ERR_EXTENSION => 'File upload was stopped by a php extension.',
         ];
 
-        $maxFilesize = $code === UPLOAD_ERR_INI_SIZE ? self::getMaxFilesize() / 1024 : 0;
+        $max_file_size = $code === UPLOAD_ERR_INI_SIZE ? self::getMaxFilesize() / 1024 : 0;
         $message = isset($errors[$code]) ? $errors[$code] : 'The file "%s" was not uploaded due to an unknown error.';
 
-        return sprintf($message, $this->getClientOriginalName(), $maxFilesize);
+        return sprintf($message, $this->getClientOriginalName(), $max_file_size);
     }
 
     /**

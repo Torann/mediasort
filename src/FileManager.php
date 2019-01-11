@@ -67,18 +67,23 @@ class FileManager
     protected function createFromObject(SymfonyUploadedFile $file)
     {
         $path = $file->getPathname();
-        $originalName = $file->getClientOriginalName();
-        $mimeType = $file->getClientMimeType();
-        $size = $file->getClientSize();
+        $original_name = $file->getClientOriginalName();
+        $mime_type = $file->getClientMimeType();
+        $size = $file->getSize();
         $error = $file->getError();
 
-        $uploadFile = new UploadedFile($path, $originalName, $mimeType, $size, $error);
+        $upload_file = new UploadedFile($path, $original_name, $mime_type, $size, $error);
 
-        if ($uploadFile->isValid() === false) {
-            throw new FileException($uploadFile->getErrorMessage($uploadFile->getError()));
+        // Throw error if the object is not valid
+        if ($upload_file->isValid() === false) {
+            throw new FileException(
+                $upload_file->getErrorMessage(
+                    $upload_file->getError()
+                )
+            );
         }
 
-        return $uploadFile;
+        return $upload_file;
     }
 
     /**
@@ -104,9 +109,9 @@ class FileManager
         file_put_contents($destination, base64_decode($data), 0);
 
         // Get mime type
-        $mimeType = mime_content_type($destination);
+        $mime_type = mime_content_type($destination);
 
-        return new UploadedFile($destination, $filename, $mimeType);
+        return new UploadedFile($destination, $filename, $mime_type);
     }
 
     /**
@@ -137,21 +142,21 @@ class FileManager
         curl_setopt_array($ch, [
             CURLOPT_URL => $file,
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.43 Safari/537.31',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
             CURLOPT_FOLLOWLOCATION => 1,
         ]);
 
-        $rawFile = curl_exec($ch);
+        $raw_file = curl_exec($ch);
 
         curl_close($ch);
 
         // Get the mime type of the file
-        $sizeInfo = getimagesizefromstring($rawFile);
-        $mime = $sizeInfo['mime'];
+        $size_info = getimagesizefromstring($raw_file);
+        $mime = $size_info['mime'];
 
         // Create a file path for the file by storing it on disk.
-        $filePath = @tempnam(sys_get_temp_dir(), 'STP');
-        file_put_contents($filePath, $rawFile);
+        $file_path = @tempnam(sys_get_temp_dir(), 'STP');
+        file_put_contents($file_path, $raw_file);
 
         // Get the original filename
         $name = strtok(pathinfo($file, PATHINFO_BASENAME), '?');
@@ -163,13 +168,13 @@ class FileManager
 
         // Get the length of the file
         if (function_exists('mb_strlen')) {
-            $size = mb_strlen($rawFile, '8bit');
+            $size = mb_strlen($raw_file, '8bit');
         }
         else {
-            $size = strlen($rawFile);
+            $size = strlen($raw_file);
         }
 
-        return new UploadedFile($filePath, $name, $mime, $size, 0);
+        return new UploadedFile($file_path, $name, $mime, $size, 0);
     }
 
     /**

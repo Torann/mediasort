@@ -11,7 +11,7 @@ class MediaSortServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    protected $mediaSortNull;
+    protected $media_sort_null;
 
     /**
      * Register the service provider.
@@ -39,10 +39,10 @@ class MediaSortServiceProvider extends ServiceProvider
      */
     protected function registerMediaSort()
     {
-        $this->mediaSortNull = sha1(time());
+        $this->media_sort_null = sha1(time());
 
         if (defined('MEDIASORT_NULL') === false) {
-            define('MEDIASORT_NULL', $this->mediaSortNull);
+            define('MEDIASORT_NULL', $this->media_sort_null);
         }
     }
 
@@ -73,15 +73,16 @@ class MediaSortServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->bind('mediasort.refresh', function ($app) {
-            return new Commands\RefreshCommand(
-                new Services\ImageRefreshService()
-            );
-        });
+        // TODO: Get this working
+        //$this->app->bind('mediasort.refresh', function ($app) {
+        //    return new Commands\RefreshCommand(
+        //        new Services\ImageRefreshService()
+        //    );
+        //});
 
         $this->commands([
             'mediasort.fasten',
-            'mediasort.refresh',
+            //'mediasort.refresh',
         ]);
     }
 

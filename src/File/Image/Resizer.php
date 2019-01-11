@@ -66,15 +66,17 @@ class Resizer
 
         $this->imagine = new $this->image_processor;
 
-        $filePath = @tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
+        $file_path = @tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
         list($width, $height, $option, $enlarge) = $this->parseStyleDimensions($style);
-        $method = "resize" . ucfirst($option);
+        $method = 'resize' . ucfirst($option);
 
         if ($method == 'resizeCustom') {
             $this->resizeCustom($file, $style, $enlarge)
-                ->save($filePath, ['quality' => $quality]);
+                ->save($file_path, [
+                    'quality' => $quality,
+                ]);
 
-            return $filePath;
+            return $file_path;
         }
 
         $image = $this->imagine->open($file->getRealPath());
@@ -90,12 +92,12 @@ class Resizer
         }
 
         $this->$method($image, $width, $height, $enlarge)
-            ->save($filePath, [
+            ->save($file_path, [
                 'quality' => $quality,
                 'flatten' => false,
             ]);
 
-        return $filePath;
+        return $file_path;
     }
 
     /**
@@ -138,16 +140,16 @@ class Resizer
             return [null, $height, 'portrait', $enlarge];
         }
 
-        $resizingOption = substr($height, -1, 1);
+        $resizing_option = substr($height, -1, 1);
 
-        if ($resizingOption == '#') {
+        if ($resizing_option == '#') {
             // Resize, then crop.
             $height = rtrim($height, '#');
 
             return [$width, $height, 'crop', $enlarge];
         }
 
-        if ($resizingOption == '!') {
+        if ($resizing_option == '!') {
             // Resize by exact width/height (does not preserve aspect ratio).
             $height = rtrim($height, '!');
 
@@ -234,14 +236,14 @@ class Resizer
             $height = $size->getHeight();
         }
 
-        list($optimalWidth, $optimalHeight) = $this->getOptimalCrop($size, $width, $height, $enlarge);
+        list($optimal_width, $optimal_height) = $this->getOptimalCrop($size, $width, $height, $enlarge);
 
         // Find center - this will be used for the crop
-        $centerX = ($optimalWidth / 2) - ($width / 2);
-        $centerY = ($optimalHeight / 2) - ($height / 2);
+        $center_x = ($optimal_width / 2) - ($width / 2);
+        $center_y = ($optimal_height / 2) - ($height / 2);
 
-        return $image->resize(new Box($optimalWidth, $optimalHeight))
-            ->crop(new Point($centerX, $centerY), new Box($width, $height));
+        return $image->resize(new Box($optimal_width, $optimal_height))
+            ->crop(new Point($center_x, $center_y), new Box($width, $height));
     }
 
     /**
@@ -282,14 +284,14 @@ class Resizer
     protected function resizeAuto(ImageInterface $image, $width, $height, $enlarge = true)
     {
         $size = $image->getSize();
-        $originalWidth = $size->getWidth();
-        $originalHeight = $size->getHeight();
+        $original_width = $size->getWidth();
+        $original_height = $size->getHeight();
 
-        if ($originalHeight < $originalWidth) {
+        if ($original_height < $original_width) {
             return $this->resizeLandscape($image, $width, $height, $enlarge);
         }
 
-        if ($originalHeight > $originalWidth) {
+        if ($original_height > $original_width) {
             return $this->resizePortrait($image, $width, $height, $enlarge);
         }
 
@@ -331,20 +333,20 @@ class Resizer
      */
     protected function getOptimalCrop(BoxInterface $size, $width, $height, $enlarge = true)
     {
-        $heightRatio = $size->getHeight() / $height;
-        $widthRatio = $size->getWidth() / $width;
+        $height_ratio = $size->getHeight() / $height;
+        $width_ratio = $size->getWidth() / $width;
 
-        if ($heightRatio < $widthRatio) {
-            $optimalRatio = $heightRatio;
+        if ($height_ratio < $width_ratio) {
+            $optimal_ratio = $height_ratio;
         }
         else {
-            $optimalRatio = $widthRatio;
+            $optimal_ratio = $width_ratio;
         }
 
-        $optimalHeight = round($size->getHeight() / $optimalRatio, 2);
-        $optimalWidth = round($size->getWidth() / $optimalRatio, 2);
+        $optimal_height = round($size->getHeight() / $optimal_ratio, 2);
+        $optimal_width = round($size->getWidth() / $optimal_ratio, 2);
 
-        return [$optimalWidth, $optimalHeight];
+        return [$optimal_width, $optimal_height];
     }
 
     /**
@@ -364,12 +366,7 @@ class Resizer
     protected function autoOrient($path, ImageInterface $image)
     {
         if (function_exists('exif_read_data')) {
-            try {
-                $exif = exif_read_data($path);
-            }
-            catch (\ErrorException $e) {
-                return $image;
-            }
+            $exif = exif_read_data($path);
 
             if (isset($exif['Orientation'])) {
                 switch ($exif['Orientation']) {
