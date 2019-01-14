@@ -93,17 +93,17 @@ return [
     'queueable' => false,
 
     /*
-	|--------------------------------------------------------------------------
-	| File Queue Path
-	|--------------------------------------------------------------------------
-	|
-	| Used to temporarily store large files for queuing. It is composed of
+    |--------------------------------------------------------------------------
+    | File Queue Path
+    |--------------------------------------------------------------------------
+    |
+    | Used to temporarily store large files for queuing. It is composed of
     | 'interpolations' that will be replaced their corresponding values
     | during runtime.
-	|
-	*/
+    |
+    */
 
-	'queue_path' => '{laravel_root}/uploads/queue',
+    'queue_path' => '{laravel_root}/uploads/queue',
 
     /*
     |--------------------------------------------------------------------------

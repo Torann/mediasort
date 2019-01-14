@@ -895,7 +895,7 @@ class Manager
         }
 
         // Queue state is optional and outside of the fillable
-        else if (preg_match('/^queue(d?)_/', $property)) {
+        elseif (preg_match('/^queue(d?)_/', $property)) {
             if ($this->isQueueable()) {
                 $this->getInstance()->setAttribute($field, $value);
             }
