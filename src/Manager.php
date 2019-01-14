@@ -778,6 +778,7 @@ class Manager
             $this->getInstance()
                 ->getConnection()
                 ->table($this->getInstance()->getTable())
+                ->where($this->getInstance()->getQualifiedKeyName(), $this->getInstance()->getKey())
                 ->update([
                     "{$this->name}_queue_state" => $state,
                 ]);
