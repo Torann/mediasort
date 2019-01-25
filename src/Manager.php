@@ -12,6 +12,7 @@ use Torann\MediaSort\Exceptions\InvalidClassException;
 class Manager
 {
     // Queued states
+    const QUEUE_NA = 0;
     const QUEUE_DONE = 1;
     const QUEUE_WAITING = 2;
     const QUEUE_WORKING = 3;
@@ -374,7 +375,7 @@ class Manager
     public function isQueued()
     {
         if ($this->isQueueable()) {
-            return $this->getAttribute('queue_state') != self::QUEUE_DONE;
+            return (int)$this->getAttribute('queue_state') > self::QUEUE_DONE;
         }
 
         return false;
@@ -753,6 +754,8 @@ class Manager
     public function getQueuedStateText()
     {
         switch ((int)$this->getAttribute('queue_state')) {
+            case self::QUEUE_NA:
+                return '';
             case self::QUEUE_DONE:
                 return 'done';
             case self::QUEUE_WAITING:
