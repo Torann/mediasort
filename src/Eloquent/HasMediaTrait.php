@@ -32,6 +32,7 @@ trait HasMediaTrait
      * @param array  $options
      *
      * @return void
+     * @throws Exception
      */
     public function hasMediaFile($name, array $options = [])
     {
@@ -168,8 +169,8 @@ trait HasMediaTrait
      */
     protected function mergeOptions($options)
     {
-        $options = array_merge(config('mediasort', []), (array)$options);
-        $options['styles'] = array_merge((array)$options['styles'], ['original' => '']);
+        $options = array_merge(config('mediasort', []), (array) $options);
+        $options['styles'] = array_merge((array) $options['styles'], ['original' => '']);
 
         return $options;
     }

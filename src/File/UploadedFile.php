@@ -17,6 +17,7 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
         'jpg' => ['image/jpeg', 'image/pjpeg'],
         'jpe' => ['image/jpeg', 'image/pjpeg'],
         'png' => 'image/png',
+        'webp' => 'image/webp',
     ];
 
     /**
@@ -32,7 +33,7 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
         // their associated MIME types. We will loop through them and look for
         // the MIME type of the current UploadedFile.
         foreach ($this->image_mimes as $image_mime) {
-            if (in_array($mime, (array)$image_mime)) {
+            if (in_array($mime, (array) $image_mime)) {
                 return true;
             }
         }

@@ -32,6 +32,7 @@ class FileManager
      * @param mixed $file
      *
      * @return \Torann\MediaSort\File\UploadedFile
+     * @throws \Torann\MediaSort\Exceptions\FileException
      */
     public function make($file)
     {
@@ -42,8 +43,7 @@ class FileManager
         if (is_array($file)) {
             if (isset($file['base64']) && isset($file['name'])) {
                 return $this->createFromBase64($file['name'], $file['base64']);
-            }
-            else {
+            } else {
                 return $this->createFromArray($file);
             }
         }
@@ -90,8 +90,8 @@ class FileManager
      * Build a Torann\MediaSort\File\UploadedFile object from a
      * base64 encoded image array. Usually from an API request.
      *
-     * @param array $filename
-     * @param array $data
+     * @param array  $filename
+     * @param string $data
      *
      * @return \Torann\MediaSort\File\UploadedFile
      */
@@ -142,7 +142,7 @@ class FileManager
         curl_setopt_array($ch, [
             CURLOPT_URL => $file,
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36',
             CURLOPT_FOLLOWLOCATION => 1,
         ]);
 
@@ -169,8 +169,7 @@ class FileManager
         // Get the length of the file
         if (function_exists('mb_strlen')) {
             $size = mb_strlen($raw_file, '8bit');
-        }
-        else {
+        } else {
             $size = strlen($raw_file);
         }
 
@@ -207,6 +206,7 @@ class FileManager
             'image/xbm' => 'xbm',
             'image/x-xbitmap' => 'xbm',
             'image/x-xbm' => 'xbm',
+            'image/webp' => 'webp',
         ], $mime_type, 'png');
     }
 }

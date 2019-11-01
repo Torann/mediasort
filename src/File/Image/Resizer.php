@@ -338,8 +338,7 @@ class Resizer
 
         if ($height_ratio < $width_ratio) {
             $optimal_ratio = $height_ratio;
-        }
-        else {
+        } else {
             $optimal_ratio = $width_ratio;
         }
 
@@ -397,8 +396,7 @@ class Resizer
             }
 
             return $image->strip();
-        }
-        else {
+        } else {
             return $image;
         }
     }

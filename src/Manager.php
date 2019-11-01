@@ -100,10 +100,7 @@ class Manager
         // now or later using queued job.
         if ($this->isQueueable()) {
             $this->queueUploadedFile($file);
-        }
-
-        // Standard upload, nothing fancy here.
-        else {
+        } else {
             $this->addUploadedFile($file);
         }
     }
@@ -117,15 +114,13 @@ class Manager
      */
     protected function queueUploadedFile($file)
     {
-        // Get the real path of the file
-        $file = $this->getFileManager()
-            ->make($file)
-            ->getRealPath();
+        // Build an UploadedFile object using provided file
+        $file = $this->getFileManager()->make($file);
 
         // Create the unique directory name and file to save into
         $file_target = $this->joinPaths(
             str_replace('.', '-', uniqid(rand(), true)),
-            basename($file)
+            $file->getClientOriginalName()
         );
 
         // Parse the queue path
@@ -144,11 +139,11 @@ class Manager
             }
 
             // Move the file
-            rename($file, $target);
-        }
-        else {
+            rename($file->getRealPath(), $target);
+        } else {
             $this->move(
-                $file, $this->joinPaths($queue_path, $file_target)
+                $file->getRealPath(),
+                $this->joinPaths($queue_path, $file_target)
             );
         }
 
@@ -280,7 +275,7 @@ class Manager
      */
     public function getQueue($queue)
     {
-        return (array)Arr::get($this->queues, $queue, []);
+        return (array) Arr::get($this->queues, $queue, []);
     }
 
     /**
@@ -375,7 +370,7 @@ class Manager
     public function isQueued()
     {
         if ($this->isQueueable()) {
-            return (int)$this->getAttribute('queue_state') > self::QUEUE_DONE;
+            return (int) $this->getAttribute('queue_state') > self::QUEUE_DONE;
         }
 
         return false;
@@ -614,8 +609,7 @@ class Manager
     {
         if ($styles) {
             $this->queueSomeForDeletion($styles);
-        }
-        else {
+        } else {
             $this->queueAllForDeletion();
         }
     }
@@ -656,8 +650,7 @@ class Manager
             if ($style && $file->isImage()) {
                 $file = $this->getResizer()
                     ->resize($file, $style);
-            }
-            else {
+            } else {
                 $file = $file->getRealPath();
             }
 
@@ -729,8 +722,7 @@ class Manager
             if ($style && $this->uploaded_file->isImage()) {
                 $file = $this->getResizer()
                     ->resize($this->uploaded_file, $style);
-            }
-            else {
+            } else {
                 $file = $this->uploaded_file->getRealPath();
             }
 
@@ -753,7 +745,7 @@ class Manager
      */
     public function getQueuedStateText()
     {
-        switch ((int)$this->getAttribute('queue_state')) {
+        switch ((int) $this->getAttribute('queue_state')) {
             case self::QUEUE_NA:
                 return '';
             case self::QUEUE_DONE:
@@ -896,16 +888,12 @@ class Manager
         // This is not fillable as it is the one required attribute
         if ($property === 'file_name') {
             $this->getInstance()->setAttribute($field, $value);
-        }
-
-        // Queue state is optional and outside of the fillable
+        } // Queue state is optional and outside of the fillable
         elseif (preg_match('/^queue(d?)_/', $property)) {
             if ($this->isQueueable()) {
                 $this->getInstance()->setAttribute($field, $value);
             }
-        }
-
-        // All other attributes must be fillable to have their values set
+        } // All other attributes must be fillable to have their values set
         else {
             if (in_array($field, $this->getInstance()->getFillable())) {
                 $this->getInstance()->setAttribute($field, $value);
