@@ -16,6 +16,7 @@ class Manager
     const QUEUE_DONE = 1;
     const QUEUE_WAITING = 2;
     const QUEUE_WORKING = 3;
+    const QUEUE_FAILED = 4;
 
     /**
      * Media identifier.
@@ -339,6 +340,10 @@ class Manager
      */
     public function url($style = '')
     {
+        if ($this->hasFailed()) {
+            return $this->failedUrl($style);
+        }
+
         if ($this->isQueued()) {
             return $this->loadingUrl($style);
         }
@@ -363,14 +368,28 @@ class Manager
     }
 
     /**
-     * Determine if the attachment is beng processed.
+     * Determine if the attachment is being processed.
      *
      * @return bool
      */
     public function isQueued()
     {
         if ($this->isQueueable()) {
-            return (int) $this->getAttribute('queue_state') > self::QUEUE_DONE;
+            return ((int) $this->getAttribute('queue_state')) > self::QUEUE_DONE;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if the attachment has failed processing.
+     *
+     * @return bool
+     */
+    public function hasFailed()
+    {
+        if ($this->isQueueable()) {
+            return ((int) $this->getAttribute('queue_state')) === self::QUEUE_FAILED;
         }
 
         return false;
@@ -811,7 +830,7 @@ class Manager
     }
 
     /**
-     * Generates the loading url if no file attachment is present.
+     * Generates the loading url if the attachment hasn't been processed.
      *
      * @param string $style
      *
@@ -822,6 +841,25 @@ class Manager
         if ($this->config('loading_url')) {
             $url = $this->getInterpolator()
                 ->interpolate($this->config('loading_url'), $style);
+
+            return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
+        }
+
+        return '';
+    }
+
+    /**
+     * Generates the failed url if the attachment failed during processing.
+     *
+     * @param string $style
+     *
+     * @return string
+     */
+    protected function failedUrl($style = '')
+    {
+        if ($this->config('failed_url')) {
+            $url = $this->getInterpolator()
+                ->interpolate($this->config('failed_url'), $style);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
         }

@@ -74,6 +74,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Failed Url
+    |--------------------------------------------------------------------------
+    |
+    | The url (relative to your project document root) containing a failed
+    | image that will be used for attachments that failed processing.
+    */
+
+    'failed_url' => '{app_url}/images/{media}/{style}/failed.gif',
+
+    /*
+    |--------------------------------------------------------------------------
     | Queueable
     |--------------------------------------------------------------------------
     |
@@ -87,6 +98,7 @@ return [
     | - Manager::QUEUE_DONE = the attachment has been processed
     | - Manager::QUEUE_WAITING = the attachment in queue for processing
     | - Manager::QUEUE_WORKING = the attachment is being processed
+    | - Manager::QUEUE_FAILED = the attachment failed processing
     |
     */
 
