@@ -3,29 +3,11 @@
 namespace Torann\MediaSort\File;
 
 use Illuminate\Support\Arr;
-use Torann\MediaSort\Manager;
 use Torann\MediaSort\Exceptions\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
 class FileManager
 {
-    /**
-     * The current media object being processed.
-     *
-     * @var Manager
-     */
-    public $media;
-
-    /**
-     * Constructor method
-     *
-     * @param Manager $media
-     */
-    public function __construct(Manager $media)
-    {
-        $this->media = $media;
-    }
-
     /**
      * Build an UploadedFile object using various file input types.
      *
@@ -209,6 +191,7 @@ class FileManager
             'image/x-xbitmap' => 'xbm',
             'image/x-xbm' => 'xbm',
             'image/webp' => 'webp',
+            'image/apng' => 'apng',
         ], $mime_type, 'png');
     }
 }

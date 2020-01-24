@@ -3,11 +3,19 @@
 namespace Torann\MediaSort\Concerns;
 
 use Illuminate\Support\Arr;
+use Torann\MediaSort\File\FileManager;
 use Illuminate\Database\Eloquent\Model;
 use Torann\MediaSort\File\Image\Resizer;
 
 trait UpdatesAttributes
 {
+    /**
+     * The uploaded file object for the attachment.
+     *
+     * @var \Torann\MediaSort\File\UploadedFile
+     */
+    protected $uploaded_file;
+
     /**
      * Tasks to perform.
      *
@@ -458,5 +466,18 @@ trait UpdatesAttributes
                 $this->getModel()->setAttribute($field, $value);
             }
         }
+    }
+
+    /**
+     * Get the file manager instance.
+     *
+     * @param mixed $file
+     *
+     * @return \Torann\MediaSort\File\UploadedFile
+     * @throws \Torann\MediaSort\Exceptions\FileException
+     */
+    protected function getUploadedFile($file)
+    {
+        return (new FileManager())->make($file);
     }
 }

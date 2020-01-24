@@ -4,7 +4,6 @@ namespace Torann\MediaSort;
 
 use Exception;
 use Illuminate\Support\Arr;
-use Torann\MediaSort\File\FileManager;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -58,19 +57,12 @@ class Manager
     protected $model;
 
     /**
-     * The uploaded file object for the attachment.
-     *
-     * @var File\UploadedFile
-     */
-    protected $uploaded_file;
-
-    /**
      * @param string $name
      * @param array  $config
      *
      * @throws Exception
      */
-    public function __construct($name, array $config)
+    public function __construct($name, array $config = null)
     {
         $this->name = $name;
 
@@ -259,19 +251,6 @@ class Manager
         }
 
         return '';
-    }
-
-    /**
-     * Get the file manager instance.
-     *
-     * @param mixed $file
-     *
-     * @return File\UploadedFile
-     * @throws Exceptions\FileException
-     */
-    protected function getUploadedFile($file)
-    {
-        return (new FileManager($this))->make($file);
     }
 
     /**

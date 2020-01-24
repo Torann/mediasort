@@ -10,16 +10,16 @@ use Torann\MediaSort\Manager;
 trait HasMediaTrait
 {
     /**
-     * File media configurations.
+     * Available attachments with optional configurations.
      *
      * @var array[]
      */
-    protected static $media = [];
+    protected $media = [];
 
     /**
      * @var array
      */
-    protected static $media_instances = [];
+    protected $media_instances = [];
 
     /**
      * Register eloquent event handlers.
@@ -34,20 +34,27 @@ trait HasMediaTrait
     {
         static::saving(function ($instance) {
             /** @var self $instance */
-            foreach ($instance->configMediaFiles() as $name => $params) {
-                if (is_null($params['file'] ?? null) === false) {
+            foreach ($instance->media as $name => $params) {
+                if (empty($params['file'] ?? null) === false) {
                     $instance->getMediaInstance($name)->beforeSave(
                         $params['file']
                     );
+
+                    // Remove the file from the reference since it is now part of the shared
+                    // manager instance and will be processed in the saved event
+                    unset($instance->media[$name]['file']);
                 }
             }
         });
 
         static::saved(function ($instance) {
             /** @var self $instance */
-            foreach ($instance->configMediaFiles() as $name => $params) {
+            foreach ($instance->media as $name => $params) {
                 if ($instance->hasMediaInstance($name)) {
                     $instance->getMediaInstance($name)->afterSave();
+
+                    // Flush the media instance
+                    unset($instance->media_instances[$name]);
                 }
             }
         });
@@ -55,7 +62,7 @@ trait HasMediaTrait
         static::deleting(function ($instance) {
             /** @var self $instance */
             if ($instance->canDeleteMedia()) {
-                foreach ($instance->configMediaFiles() as $name => $params) {
+                foreach ($instance->media as $name => $params) {
                     $instance->getMediaInstance($name)->beforeDelete();
                 }
             }
@@ -64,44 +71,25 @@ trait HasMediaTrait
         static::deleted(function ($instance) {
             /** @var self $instance */
             if ($instance->canDeleteMedia()) {
-                foreach ($instance->configMediaFiles() as $name => $params) {
+                foreach ($instance->media as $name => $params) {
                     $instance->getMediaInstance($name)->afterDelete();
+
+                    // Flush the media instance
+                    unset($instance->media_instances[$name]);
                 }
             }
         });
     }
 
     /**
-     * @param mixed $key
-     * @param mixed $value
-     *
-     * @return array|mixed|null
-     */
-    public function configMediaFiles($key = null, $value = null)
-    {
-        if (isset(self::$media[self::class]) === false) {
-            self::$media[self::class] = [];
-        }
-
-        if ($value !== null) {
-            return Arr::set(self::$media[self::class], $key, $value);
-        }
-
-        if ($key !== null) {
-            return Arr::get(self::$media[self::class], $key);
-        }
-
-        return self::$media[self::class];
-    }
-
-    /**
      * Accessor method for the media instances property.
      *
      * @return Generator
+     * @throws Exception
      */
     public function getMediaFiles(): Generator
     {
-        foreach (array_keys($this->configMediaFiles()) as $name) {
+        foreach (array_keys($this->media) as $name) {
             yield $this->getMedia($name);
         }
     }
@@ -118,7 +106,7 @@ trait HasMediaTrait
      */
     public function hasMediaFile($name, array $options = [])
     {
-        $this->configMediaFiles("{$name}.config", $options);
+        Arr::set($this->media, "{$name}.config", $options);
     }
 
     /**
@@ -128,13 +116,19 @@ trait HasMediaTrait
      */
     public function hasQueuedAttachments()
     {
-        return count($this->getQueuedAttachments()) > 0;
+        try {
+            return count($this->getQueuedAttachments()) > 0;
+        }
+        catch (Exception $e) {
+            return false;
+        }
     }
 
     /**
      * Return all queued attachments that need processing.
      *
      * @return array
+     * @throws Exception
      */
     public function getQueuedAttachments()
     {
@@ -155,10 +149,11 @@ trait HasMediaTrait
      * @param string $key
      *
      * @return mixed
+     * @throws Exception
      */
     public function getAttribute($key)
     {
-        if (array_key_exists($key, $this->configMediaFiles())) {
+        if (array_key_exists($key, $this->media)) {
             return $this->getMedia($key);
         }
 
@@ -175,8 +170,8 @@ trait HasMediaTrait
      */
     public function setAttribute($key, $value)
     {
-        if (array_key_exists($key, $this->configMediaFiles())) {
-            $this->configMediaFiles("{$key}.file", $value);
+        if (array_key_exists($key, $this->media)) {
+            Arr::set($this->media, "{$key}.file", $value);
 
             return $this;
         }
@@ -190,13 +185,12 @@ trait HasMediaTrait
      * @param string $name
      *
      * @return Manager
+     * @throws Exception
      */
     protected function getMedia($name): Manager
     {
-        $media = $this->configMediaFiles($name);
-
         $instances = new Manager(
-            $name, $this->mergeOptions(Arr::get($media, 'config'))
+            $name, Arr::get($this->media, "{$name}.config")
         );
 
         $instances->setModel($this);
@@ -211,8 +205,7 @@ trait HasMediaTrait
      */
     protected function hasMediaInstance($name): bool
     {
-        return isset(self::$media_instances[self::class])
-            && array_key_exists($name, self::$media_instances[self::class]);
+        return array_key_exists($name, $this->media_instances);
     }
 
     /**
@@ -221,43 +214,15 @@ trait HasMediaTrait
      * @param string $name
      *
      * @return Manager
+     * @throws Exception
      */
     protected function getMediaInstance($name): Manager
     {
-        if (isset(self::$media_instances[self::class]) === false) {
-            self::$media_instances[self::class] = [];
+        if (array_key_exists($name, $this->media_instances) === false) {
+            $this->media_instances[$name] = $this->getMedia($name);
         }
 
-        if (array_key_exists($name, self::$media_instances[self::class]) === false) {
-            self::$media_instances[self::class][$name] = $this->getMedia($name);
-        }
-
-        return self::$media_instances[self::class][$name];
-    }
-
-    /**
-     * Merge configuration options.
-     *
-     * Here we'll merge user defined options with the MediaSort defaults in a cascading manner.
-     * We start with overall MediaSort options.  Next we merge in storage driver specific options.
-     * Finally we'll merge in media specific options on top of that.
-     *
-     * @param array $options
-     *
-     * @return array
-     */
-    protected function mergeOptions(array $overrides = null)
-    {
-        $options = config('mediasort', []);
-
-        // Apply any overrides
-        if (is_array($overrides)) {
-            $options = array_merge($options, $overrides);
-        }
-
-        $options['styles'] = array_merge((array) $options['styles'], ['original' => '']);
-
-        return $options;
+        return $this->media_instances[$name];
     }
 
     /**

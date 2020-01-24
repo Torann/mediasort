@@ -28,16 +28,30 @@ trait HasConfig
     }
 
     /**
-     * Mutator method for the config property.
+     * Merge configuration options.
+     *
+     * Here we'll merge user defined options with the MediaSort defaults in a cascading manner.
+     * We start with overall MediaSort options.  Next we merge in storage driver specific options.
+     * Finally we'll merge in media specific options on top of that.
      *
      * @param array $config
      *
      * @return void
      * @throws Exception
      */
-    public function setConfig($config)
+    public function setConfig(array $config = null)
     {
-        $this->config = $config;
+        // Get the system set configuration
+        $this->config = config('mediasort', []);
+
+        // Apply any overrides
+        if (is_array($config)) {
+            $this->config = array_merge($this->config, $config);
+        }
+
+        $this->config['styles'] = array_merge(
+            (array) $this->config['styles'], ['original' => '']
+        );
 
         // Sanity check
         if (strpos($this->config['url'], '{id}') === false) {
