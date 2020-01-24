@@ -63,6 +63,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Waiting Url
+    |--------------------------------------------------------------------------
+    |
+    | The url (relative to your project document root) containing a waiting
+    | image that will be used for attachments that are flagged as waiting to be
+    | processed.
+    */
+
+    'waiting_url' => '{app_url}/images/{media}/{style}/waiting.gif',
+
+    /*
+    |--------------------------------------------------------------------------
     | Loading Url
     |--------------------------------------------------------------------------
     |

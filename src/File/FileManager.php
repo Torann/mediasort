@@ -1,9 +1,9 @@
 <?php
 
-namespace Torann\MediaSort;
+namespace Torann\MediaSort\File;
 
 use Illuminate\Support\Arr;
-use Torann\MediaSort\File\UploadedFile;
+use Torann\MediaSort\Manager;
 use Torann\MediaSort\Exceptions\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
@@ -12,16 +12,16 @@ class FileManager
     /**
      * The current media object being processed.
      *
-     * @var \Torann\MediaSort\Manager
+     * @var Manager
      */
     public $media;
 
     /**
      * Constructor method
      *
-     * @param \Torann\MediaSort\Manager $media
+     * @param Manager $media
      */
-    public function __construct($media)
+    public function __construct(Manager $media)
     {
         $this->media = $media;
     }
@@ -31,8 +31,8 @@ class FileManager
      *
      * @param mixed $file
      *
-     * @return \Torann\MediaSort\File\UploadedFile
-     * @throws \Torann\MediaSort\Exceptions\FileException
+     * @return UploadedFile
+     * @throws FileException
      */
     public function make($file)
     {
@@ -59,10 +59,10 @@ class FileManager
      * Build a \Torann\MediaSort\File\UploadedFile object from
      * a Symfony\Component\HttpFoundation\File\UploadedFile object.
      *
-     * @param \Symfony\Component\HttpFoundation\File\UploadedFile $file
+     * @param SymfonyUploadedFile $file
      *
-     * @return \Torann\MediaSort\File\UploadedFile
-     * @throws \Torann\MediaSort\Exceptions\FileException
+     * @return UploadedFile
+     * @throws FileException
      */
     protected function createFromObject(SymfonyUploadedFile $file)
     {
@@ -93,7 +93,7 @@ class FileManager
      * @param array  $filename
      * @param string $data
      *
-     * @return \Torann\MediaSort\File\UploadedFile
+     * @return UploadedFile
      */
     protected function createFromBase64($filename, $data)
     {
@@ -120,7 +120,7 @@ class FileManager
      *
      * @param array $file
      *
-     * @return \Torann\MediaSort\File\UploadedFile
+     * @return UploadedFile
      */
     protected function createFromArray($file)
     {
@@ -133,7 +133,7 @@ class FileManager
      *
      * @param string $file
      *
-     * @return \Torann\MediaSort\File\UploadedFile
+     * @return UploadedFile
      */
     protected function createFromUrl($file)
     {
@@ -182,11 +182,13 @@ class FileManager
      *
      * @param string $file
      *
-     * @return \Torann\MediaSort\File\UploadedFile
+     * @return UploadedFile
      */
     protected function createFromString($file)
     {
-        return new UploadedFile($file, basename($file), null, filesize($file));
+        return new UploadedFile(
+            $file, basename($file), null, filesize($file)
+        );
     }
 
     /**

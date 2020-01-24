@@ -2,7 +2,6 @@
 
 namespace Torann\MediaSort;
 
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class Interpolator
@@ -81,7 +80,9 @@ class Interpolator
      */
     protected function getClass()
     {
-        return strtolower($this->handleBackslashes($this->manager->getInstanceClass()));
+        return strtolower($this->handleBackslashes(
+            get_class($this->manager->getModel())
+        ));
     }
 
     /**
@@ -105,17 +106,17 @@ class Interpolator
     }
 
     /**
-     * Returns the id of the current object instance.
+     * Returns the id of the current model.
      *
      * @return string
      */
     protected function getId()
     {
         if ($key = $this->manager->config('model_primary_key')) {
-            return $this->manager->getInstance()->{$key};
+            return $this->manager->getModel()->{$key};
         }
 
-        return $this->manager->getInstance()->getKey();
+        return $this->manager->getModel()->getKey();
     }
 
     /**
@@ -170,7 +171,7 @@ class Interpolator
      */
     public function getAttribute($string)
     {
-        return $this->manager->getInstance()->getAttribute($string);
+        return $this->manager->getModel()->getAttribute($string);
     }
 
     /**

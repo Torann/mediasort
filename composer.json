@@ -1,11 +1,13 @@
 {
   "name": "torann/mediasort",
-  "description": "Simply media manager for Laravel using the builtin Flysystem.",
+  "description": "Attachment manager for Laravel.",
   "keywords": [
     "upload",
     "media",
     "filesystem",
     "cloud storage",
+    "aws",
+    "attachments",
     "file",
     "paperclip"
   ],

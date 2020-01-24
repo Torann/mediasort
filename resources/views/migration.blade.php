@@ -20,6 +20,7 @@ class Add{{ ucfirst($attachment) }}FieldsTo{{ studly_case($table) }}Table extend
             $table->timestamp('{{ $attachment }}_updated_at')->nullable();
             @if($queueable)$table->tinyInteger('{{ $attachment }}_queue_state')->default(Manager::QUEUE_DONE);@endif
             @if($queueable)$table->string('{{ $attachment }}_queued_file')->nullable()->default(null);@endif
+            @if($queueable)$table->timestamp('{{ $attachment }}_queued_at')->nullable();@endif
 
         });
     }
@@ -38,6 +39,7 @@ class Add{{ ucfirst($attachment) }}FieldsTo{{ studly_case($table) }}Table extend
             $table->dropColumn('{{ $attachment }}_updated_at');
             @if($queueable)$table->dropColumn('{{ $attachment }}_queue_state');@endif
             @if($queueable)$table->dropColumn('{{ $attachment }}_queued_file');@endif
+            @if($queueable)$table->dropColumn('{{ $attachment }}_queued_at');@endif
 
         });
     }

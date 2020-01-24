@@ -7,7 +7,7 @@
 [![Donate to this project using Flattr](https://img.shields.io/badge/flattr-donate-yellow.svg)](https://flattr.com/profile/torann)
 [![Donate to this project using Paypal](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4CJA2A97NPYVU)
 
-MediaSort upload manager using Laravel 5's builtin Filesystem / Cloud Storage. Store your files locally, Amazon S3, or Rackspace.
+MediaSort upload manager using Laravel's built-in Filesystem / Cloud Storage. Store your files locally or in the cloud.
 
 - [MediaSort on Packagist](https://packagist.org/packages/torann/mediasort)
 - [MediaSort on GitHub](https://github.com/Torann/mediasort)
