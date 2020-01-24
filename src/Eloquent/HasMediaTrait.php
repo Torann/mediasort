@@ -4,6 +4,7 @@ namespace Torann\MediaSort\Eloquent;
 
 use Exception;
 use Generator;
+use Illuminate\Support\Arr;
 use Torann\MediaSort\Manager;
 
 trait HasMediaTrait
@@ -13,7 +14,85 @@ trait HasMediaTrait
      *
      * @var array[]
      */
-    protected $media_config = [];
+    protected static $media = [];
+
+    /**
+     * @var array
+     */
+    protected static $media_instances = [];
+
+    /**
+     * Register eloquent event handlers.
+     *
+     * We'll spin through each of the media file defined on this class
+     * and register callbacks for the events we need to observe in order to
+     * handle file uploads.
+     *
+     * @return void
+     */
+    public static function bootHasMediaTrait()
+    {
+        static::saving(function ($instance) {
+            /** @var self $instance */
+            foreach ($instance->configMediaFiles() as $name => $params) {
+                if (is_null($params['file'] ?? null) === false) {
+                    $instance->getMediaInstance($name)->beforeSave(
+                        $params['file']
+                    );
+                }
+            }
+        });
+
+        static::saved(function ($instance) {
+            /** @var self $instance */
+            foreach ($instance->configMediaFiles() as $name => $params) {
+                if ($instance->hasMediaInstance($name)) {
+                    $instance->getMediaInstance($name)->afterSave();
+                }
+            }
+        });
+
+        static::deleting(function ($instance) {
+            /** @var self $instance */
+            if ($instance->canDeleteMedia()) {
+                foreach ($instance->configMediaFiles() as $name => $params) {
+                    $instance->getMediaInstance($name)->beforeDelete();
+                }
+            }
+        });
+
+        static::deleted(function ($instance) {
+            /** @var self $instance */
+            if ($instance->canDeleteMedia()) {
+                foreach ($instance->configMediaFiles() as $name => $params) {
+                    $instance->getMediaInstance($name)->afterDelete();
+                }
+            }
+        });
+    }
+
+    /**
+     * @param mixed $key
+     * @param mixed $value
+     *
+     * @return array|mixed|null
+     */
+    public function configMediaFiles($key = null, $value = null)
+    {
+        if (isset(self::$media[self::class]) === false) {
+            self::$media[self::class] = [];
+        }
+
+        if ($value !== null) {
+            return Arr::set(self::$media[self::class], $key, $value);
+        }
+
+        if ($key !== null) {
+            return Arr::get(self::$media[self::class], $key);
+        }
+
+        return self::$media[self::class];
+    }
 
     /**
      * Accessor method for the media instances property.
@@ -22,7 +101,7 @@ trait HasMediaTrait
      */
     public function getMediaFiles(): Generator
     {
-        foreach (array_keys($this->media_config) as $name) {
+        foreach (array_keys($this->configMediaFiles()) as $name) {
             yield $this->getMedia($name);
         }
     }
@@ -39,41 +118,7 @@ trait HasMediaTrait
      */
     public function hasMediaFile($name, array $options = [])
     {
-        $this->media_config[$name] = $options;
-    }
-
-    /**
-     * Register eloquent event handlers.
-     *
-     * We'll spin through each of the media file defined on this class
-     * and register callbacks for the events we need to observe in order to
-     * handle file uploads.
-     *
-     * @return void
-     */
-    public static function bootHasMediaTrait()
-    {
-        static::saved(function ($instance) {
-            foreach ($instance->getMediaFiles() as $media_instance) {
-                $media_instance->afterSave($instance);
-            }
-        });
-
-        static::deleting(function ($instance) {
-            if ($instance->canDeleteMedia()) {
-                foreach ($instance->getMediaFiles() as $media_instance) {
-                    $media_instance->beforeDelete($instance);
-                }
-            }
-        });
-
-        static::deleted(function ($instance) {
-            if ($instance->canDeleteMedia()) {
-                foreach ($instance->getMediaFiles() as $media_instance) {
-                    $media_instance->afterDelete($instance);
-                }
-            }
-        });
+        $this->configMediaFiles("{$name}.config", $options);
     }
 
     /**
@@ -113,7 +158,7 @@ trait HasMediaTrait
      */
     public function getAttribute($key)
     {
-        if (array_key_exists($key, $this->media_config)) {
+        if (array_key_exists($key, $this->configMediaFiles())) {
             return $this->getMedia($key);
         }
 
@@ -130,10 +175,8 @@ trait HasMediaTrait
      */
     public function setAttribute($key, $value)
     {
-        if (array_key_exists($key, $this->media_config)) {
-            if ($value) {
-                $this->getMedia($key)->setUploadedFile($value, $key);
-            }
+        if (array_key_exists($key, $this->configMediaFiles())) {
+            $this->configMediaFiles("{$key}.file", $value);
 
             return $this;
         }
@@ -150,13 +193,46 @@ trait HasMediaTrait
      */
     protected function getMedia($name): Manager
     {
+        $media = $this->configMediaFiles($name);
+
         $instances = new Manager(
-            $name, $this->mergeOptions($this->media_config[$name] ?? [])
+            $name, $this->mergeOptions(Arr::get($media, 'config'))
         );
 
-        $instances->setInstance($this);
+        $instances->setModel($this);
 
         return $instances;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    protected function hasMediaInstance($name): bool
+    {
+        return isset(self::$media_instances[self::class])
+            && array_key_exists($name, self::$media_instances[self::class]);
+    }
+
+    /**
+     * Get the media manager instance for the provided media config.
+     *
+     * @param string $name
+     *
+     * @return Manager
+     */
+    protected function getMediaInstance($name): Manager
+    {
+        if (isset(self::$media_instances[self::class]) === false) {
+            self::$media_instances[self::class] = [];
+        }
+
+        if (array_key_exists($name, self::$media_instances[self::class]) === false) {
+            self::$media_instances[self::class][$name] = $this->getMedia($name);
+        }
+
+        return self::$media_instances[self::class][$name];
     }
 
     /**
@@ -170,9 +246,15 @@ trait HasMediaTrait
      *
      * @return array
      */
-    protected function mergeOptions($options)
+    protected function mergeOptions(array $overrides = null)
     {
-        $options = array_merge(config('mediasort', []), (array) $options);
+        $options = config('mediasort', []);
+
+        // Apply any overrides
+        if (is_array($overrides)) {
+            $options = array_merge($options, $overrides);
+        }
+
         $options['styles'] = array_merge((array) $options['styles'], ['original' => '']);
 
         return $options;
