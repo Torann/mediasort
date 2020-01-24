@@ -110,6 +110,21 @@ trait HasMediaTrait
     }
 
     /**
+     * Update a media type config in the list of available media.
+     *
+     * @param string $name
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function updateMediaFile($name, $key, $value)
+    {
+        Arr::set($this->media, "{$name}.config.{$key}", $value);
+    }
+
+    /**
      * Determine if there are any attachments queued for processing.
      *
      * @return bool

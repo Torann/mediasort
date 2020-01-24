@@ -17,13 +17,23 @@ trait HasConfig
     /**
      * Get configuration value.
      *
-     * @param string $key
-     * @param mixed  $default
+     * @param mixed $key
+     * @param mixed $default
      *
      * @return mixed
      */
     public function config($key, $default = null)
     {
+        if (is_array($key)) {
+            foreach ($key as $k => $v) {
+                Arr::set($this->config, $k, $v);
+
+                $this->getModel()->updateMediaFile($this->name, $k, $v);
+            }
+
+            return null;
+        }
+
         return Arr::get($this->config, $key, $default);
     }
 

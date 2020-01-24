@@ -220,7 +220,7 @@ class Manager
      */
     public function __set($key, $value)
     {
-        Arr::set($this->config, $key, $value);
+        $this->config([$key => $value]);
     }
 
     /**
