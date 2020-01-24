@@ -32,14 +32,12 @@ trait UpdatesAttributes
             return;
         }
 
-        $this->setUploadedFile($file);
-
         // Determine if this attachment should be processed
         // now or later using queued job.
         if ($this->isQueueable()) {
-            $this->queueUploadedFile();
+            $this->queueUploadedFile($file);
         } else {
-            $this->addUploadedFile();
+            $this->addUploadedFile($file);
         }
     }
 
@@ -146,10 +144,15 @@ trait UpdatesAttributes
     /**
      * Mutator method for the uploadedFile property.
      *
+     * @param mixed $file
+     *
      * @return void
+     * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    protected function queueUploadedFile()
+    protected function queueUploadedFile($file)
     {
+        $this->setUploadedFile($file);
+
         // Create the unique directory name and file to save into
         $file_target = $this->joinPaths(
             str_replace('.', '-', uniqid(rand(), true)),
@@ -184,11 +187,16 @@ trait UpdatesAttributes
     /**
      * Mutator method for the uploadedFile property.
      *
+     * @param mixed $file
+     *
      * @return void
+     * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    protected function addUploadedFile()
+    protected function addUploadedFile($file)
     {
         $this->clear();
+
+        $this->setUploadedFile($file);
 
         // Get the original values
         $filename = $this->uploaded_file->getClientOriginalName();
@@ -280,6 +288,7 @@ trait UpdatesAttributes
      * @param bool   $cleanup
      *
      * @return void
+     * @throws \Torann\MediaSort\Exceptions\FileException
      */
     public function processQueue(Model $model, $path = null, bool $cleanup = true)
     {
