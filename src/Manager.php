@@ -150,7 +150,6 @@ class Manager
 
         // Save the information for later
         $this->instanceWrite('queue_state', self::QUEUE_WAITING);
-        $this->instanceWrite('queued_at', date('Y-m-d H:i:s'));
         $this->instanceWrite('queued_file', $file_target);
     }
 
@@ -171,14 +170,11 @@ class Manager
         $filename = $this->uploaded_file->getClientOriginalName();
         $content_type = $this->uploaded_file->getMimeType();
 
-        // Set model attributes
+        // Set model values
         $this->instanceWrite('file_name', $filename);
         $this->instanceWrite('file_size', $this->uploaded_file->getSize());
         $this->instanceWrite('content_type', $content_type);
         $this->instanceWrite('updated_at', date('Y-m-d H:i:s'));
-
-        // Set model queue attributes
-        $this->instanceWrite('queued_at', null);
         $this->instanceWrite('queued_file', null);
 
         // Queue all styles for writing
@@ -231,13 +227,11 @@ class Manager
      *
      * @param Model $instance
      *
-     * @return self
+     * @return void
      */
     public function setInstance($instance)
     {
         $this->instance = $instance;
-
-        return $this;
     }
 
     /**
@@ -346,8 +340,12 @@ class Manager
      */
     public function url($style = '')
     {
+        if ($this->hasFailed()) {
+            return $this->failedUrl($style);
+        }
+
         if ($this->isQueued()) {
-            return $this->queueUrl($style);
+            return $this->loadingUrl($style);
         }
 
         if ($this->getAttribute('filename')) {
@@ -384,23 +382,17 @@ class Manager
     }
 
     /**
-     * Determine if the attachment is in the given queue state.
-     *
-     * @param string $state
+     * Determine if the attachment has failed processing.
      *
      * @return bool
-     **/
-    public function isQueueState($state): bool
+     */
+    public function hasFailed()
     {
-        if ($this->isQueueable() === false) {
-            return false;
+        if ($this->isQueueable()) {
+            return ((int) $this->getAttribute('queue_state')) === self::QUEUE_FAILED;
         }
 
-        // Set state value from constant
-        $state = strtoupper($state);
-        $state = defined("self::QUEUE_{$state}") ? constant("self::QUEUE_{$state}") : null;
-
-        return $state !== null && ((int) $this->getAttribute('queue_state')) === $state ? true : false;
+        return false;
     }
 
     /**
@@ -440,11 +432,7 @@ class Manager
      */
     public function hasMedia()
     {
-        if ($this->getAttribute('filename') && $this->path()) {
-            return $this->isQueued() === false;
-        }
-
-        return false;
+        return ($this->getAttribute('filename') && $this->path());
     }
 
     /**
@@ -514,6 +502,32 @@ class Manager
     public function size()
     {
         return $this->getAttribute('file_size');
+    }
+
+    /**
+     * Returns the size of the file as originally assigned to this attachment's model.
+     * Lives in the <attachment>_file_size attribute of the model.
+     *
+     * @return integer
+     *
+     * @deprecated Use getAttribute() instead
+     */
+    public function queueState()
+    {
+        return $this->getAttribute('queue_state');
+    }
+
+    /**
+     * Returns the name of the file as originally assigned to this attachment's model.
+     * Lives in the <attachment>_file_name attribute of the model.
+     *
+     * @return string
+     *
+     * @deprecated Use getAttribute() instead
+     */
+    public function originalFilename()
+    {
+        return $this->getAttribute('file_name');
     }
 
     /**
@@ -822,24 +836,30 @@ class Manager
      *
      * @return string
      */
-    protected function queueUrl($style = '')
+    protected function loadingUrl($style = '')
     {
-        // Determine which dynamic image to display
-        switch ((int) $this->getAttribute('queue_state')) {
-            case self::QUEUE_WAITING:
-                $key = 'waiting_url';
-                break;
-            case self::QUEUE_FAILED:
-                $key = 'failed_url';
-                break;
-            default:
-                $key = 'loading_url';
-                break;
+        if ($this->config('loading_url')) {
+            $url = $this->getInterpolator()
+                ->interpolate($this->config('loading_url'), $style);
+
+            return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
         }
 
-        if ($this->config($key)) {
+        return '';
+    }
+
+    /**
+     * Generates the failed url if the attachment failed during processing.
+     *
+     * @param string $style
+     *
+     * @return string
+     */
+    protected function failedUrl($style = '')
+    {
+        if ($this->config('failed_url')) {
             $url = $this->getInterpolator()
-                ->interpolate($this->config($key), $style);
+                ->interpolate($this->config('failed_url'), $style);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
         }
@@ -887,10 +907,7 @@ class Manager
         $this->instanceWrite('file_size', null);
         $this->instanceWrite('content_type', null);
         $this->instanceWrite('updated_at', null);
-
-        // Set model queue attributes
         $this->instanceWrite('queue_state', self::QUEUE_DONE);
-        $this->instanceWrite('queued_at', null);
         $this->instanceWrite('queued_file', null);
     }
 
@@ -909,7 +926,7 @@ class Manager
         // This is not fillable as it is the one required attribute
         if ($property === 'file_name') {
             $this->getInstance()->setAttribute($field, $value);
-        } // Queue attributes are optional and outside of the fillable
+        } // Queue state is optional and outside of the fillable
         elseif (preg_match('/^queue(d?)_/', $property)) {
             if ($this->isQueueable()) {
                 $this->getInstance()->setAttribute($field, $value);
