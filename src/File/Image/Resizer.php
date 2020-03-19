@@ -365,7 +365,7 @@ class Resizer
     protected function autoOrient($path, ImageInterface $image)
     {
         if (function_exists('exif_read_data')) {
-            $exif = exif_read_data($path);
+            $exif = @exif_read_data($path);
 
             if (isset($exif['Orientation'])) {
                 switch ($exif['Orientation']) {
