@@ -48,13 +48,12 @@ class FileManager
      */
     protected function createFromObject(SymfonyUploadedFile $file)
     {
-        $path = $file->getPathname();
-        $original_name = $file->getClientOriginalName();
-        $mime_type = $file->getClientMimeType();
-        $size = $file->getSize();
-        $error = $file->getError();
-
-        $upload_file = new UploadedFile($path, $original_name, $mime_type, $size, $error);
+        $upload_file = new UploadedFile(
+            $file->getPathname(),
+            $file->getClientOriginalName(),
+            $file->getClientMimeType(),
+            $file->getError()
+        );
 
         // Throw error if the object is not valid
         if ($upload_file->isValid() === false) {
@@ -106,7 +105,11 @@ class FileManager
      */
     protected function createFromArray($file)
     {
-        return new UploadedFile($file['tmp_name'], $file['name'], $file['type'], $file['size'], $file['error']);
+        return new UploadedFile(
+            $file['tmp_name'],
+            $file['name'],
+            $file['type']
+        );
     }
 
     /**
@@ -124,7 +127,7 @@ class FileManager
         curl_setopt_array($ch, [
             CURLOPT_URL => $file,
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36',
             CURLOPT_FOLLOWLOCATION => 1,
         ]);
 
@@ -155,7 +158,7 @@ class FileManager
             $size = strlen($raw_file);
         }
 
-        return new UploadedFile($file_path, $name, $mime, $size, 0);
+        return new UploadedFile($file_path, $name, $mime);
     }
 
     /**
@@ -168,9 +171,7 @@ class FileManager
      */
     protected function createFromString($file)
     {
-        return new UploadedFile(
-            $file, basename($file), null, filesize($file)
-        );
+        return new UploadedFile($file, basename($file));
     }
 
     /**
