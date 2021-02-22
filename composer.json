@@ -19,7 +19,7 @@
     }
   ],
   "require": {
-    "php": "^7.2",
+    "php": ">=7.2",
     "illuminate/support": "~6.0|~7.0|~8.0",
     "illuminate/container": "~6.0|~7.0|~8.0",
     "imagine/imagine": "~1.2"
