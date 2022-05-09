@@ -1,13 +1,10 @@
 <?php
 
-namespace Torann\MediaSort\Eloquent;
+namespace Torann\MediaSort;
 
 use Generator;
 
-/**
- * @deprecated Removing in next major release, use \Torann\MediaSort\SupportsMedia
- */
-interface MediaSortInterface
+interface SupportsMedia
 {
     /**
      * Accessor method for the media instance property.
