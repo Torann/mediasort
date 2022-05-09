@@ -100,7 +100,7 @@ return [
     | Queueable
     |--------------------------------------------------------------------------
     |
-    | This indicates if the attachement is queueable. If queuable the model
+    | This indicates if the attachment is queueable. If queueable the model
     | needs to include the column to indicate this, the format for such column
     | would be `<style>_queue_state`. The state values can be found as constants
     | on \Torann\MediaSort\Manager
@@ -202,7 +202,7 @@ return [
     | The default style returned from the LatchOn file location helper methods.
     | An unaltered version of uploaded file is always stored within the 'original'
     | style, however the default_style can be set to point to any of the defined
-    | syles within the styles array.
+    | styles within the styles array.
     |
     */
 

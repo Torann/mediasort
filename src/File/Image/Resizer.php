@@ -7,32 +7,17 @@ use Imagine\Image\Point;
 use Illuminate\Support\Arr;
 use Imagine\Image\BoxInterface;
 use Imagine\Image\ImageInterface;
+use Imagine\Image\ImagineInterface;
 use Imagine\Image\ManipulatorInterface;
 use Torann\MediaSort\File\UploadedFile;
 use Torann\MediaSort\Exceptions\InvalidClassException;
 
 class Resizer
 {
-    /**
-     * Image processor class.
-     *
-     * @var string
-     */
-    protected $image_processor;
+    protected string $image_processor;
+    protected array $options = [];
 
-    /**
-     * Instance of imagine Interface.
-     *
-     * @var ImageInterface
-     */
-    protected $imagine;
-
-    /**
-     * Resizer options.
-     *
-     * @var array
-     */
-    protected $options = [];
+    protected ImagineInterface|null $imagine = null;
 
     /**
      * Constructor method
@@ -40,9 +25,9 @@ class Resizer
      * @param string $image_processor
      * @param array  $options
      *
-     * @throws \Torann\MediaSort\Exceptions\InvalidClassException
+     * @throws InvalidClassException
      */
-    public function __construct($image_processor, array $options = [])
+    public function __construct(string $image_processor, array $options = [])
     {
         if (class_exists($image_processor) === false) {
             throw new InvalidClassException('Image processor not found.');
@@ -60,14 +45,16 @@ class Resizer
      *
      * @return string
      */
-    public function resize(UploadedFile $file, $style)
+    public function resize(UploadedFile $file, string $style): string
     {
         $quality = $this->option('quality', 90);
 
         $this->imagine = new $this->image_processor;
 
         $file_path = @tempnam(sys_get_temp_dir(), 'STP') . '.' . $file->getClientOriginalName();
-        list($width, $height, $option, $enlarge) = $this->parseStyleDimensions($style);
+
+        [$width, $height, $option, $enlarge] = $this->parseStyleDimensions($style);
+
         $method = 'resize' . ucfirst($option);
 
         if ($method == 'resizeCustom') {
@@ -110,7 +97,7 @@ class Resizer
      *
      * @return array
      */
-    protected function parseStyleDimensions($style)
+    protected function parseStyleDimensions(string $style): array
     {
         if (is_callable($style) === true) {
             return [null, null, 'custom', false];
@@ -119,38 +106,37 @@ class Resizer
         $enlarge = true;
 
         // Don't allow the package to enlarge an image
-        if (strpos($style, '?') !== false) {
+        if (str_contains($style, '?')) {
             $style = str_replace('?', '', $style);
             $enlarge = false;
         }
 
-        if (strpos($style, 'x') === false) {
+        if (str_contains($style, 'x') === false) {
             // Width given, height automatically selected to preserve aspect ratio (landscape).
             $width = $style;
 
             return [$width, null, 'landscape', $enlarge];
         }
 
-        $dimensions = explode('x', $style);
-        $width = $dimensions[0];
-        $height = $dimensions[1];
+        // Break out the dimensions
+        @list($width, $height) = explode('x', $style, 2);
 
+        // Height given, width automatically selected to preserve aspect ratio (portrait).
         if (empty($width)) {
-            // Height given, width automatically selected to preserve aspect ratio (portrait).
             return [null, $height, 'portrait', $enlarge];
         }
 
         $resizing_option = substr($height, -1, 1);
 
+        // Resize, then crop.
         if ($resizing_option == '#') {
-            // Resize, then crop.
             $height = rtrim($height, '#');
 
             return [$width, $height, 'crop', $enlarge];
         }
 
+        // Resize by exact width/height (does not preserve aspect ratio).
         if ($resizing_option == '!') {
-            // Resize by exact width/height (does not preserve aspect ratio).
             $height = rtrim($height, '!');
 
             return [$width, $height, 'exact', $enlarge];
@@ -164,14 +150,18 @@ class Resizer
      * Resize an image as a landscape (width only)
      *
      * @param ImageInterface $image
-     * @param string         $width
-     * @param string         $height
+     * @param string|null    $width
+     * @param string|null    $height
      * @param bool           $enlarge
      *
      * @return ManipulatorInterface
      */
-    protected function resizeLandscape(ImageInterface $image, $width, $height, $enlarge = true)
-    {
+    protected function resizeLandscape(
+        ImageInterface $image,
+        string|null    $width,
+        string|null    $height,
+        bool           $enlarge = true
+    ): ManipulatorInterface {
         // Don't enlarge a small image
         $box = $image->getSize();
         $ratio = $box->getHeight() / $box->getWidth();
@@ -191,14 +181,18 @@ class Resizer
      * Resize an image as a portrait (height only)
      *
      * @param ImageInterface $image
-     * @param string         $width
-     * @param string         $height
+     * @param string|null    $width
+     * @param string|null    $height
      * @param bool           $enlarge
      *
      * @return ManipulatorInterface
      */
-    protected function resizePortrait(ImageInterface $image, $width, $height, $enlarge = true)
-    {
+    protected function resizePortrait(
+        ImageInterface $image,
+        string|null    $width,
+        string|null    $height,
+        bool           $enlarge = true
+    ): ManipulatorInterface {
         // Don't enlarge a small image
         $box = $image->getSize();
         $ratio = $box->getWidth() / $box->getHeight();
@@ -218,14 +212,18 @@ class Resizer
      * Resize an image and then center crop it.
      *
      * @param ImageInterface $image
-     * @param string         $width
-     * @param string         $height
+     * @param string|null    $width
+     * @param string|null    $height
      * @param bool           $enlarge
      *
      * @return ManipulatorInterface
      */
-    protected function resizeCrop(ImageInterface $image, $width, $height, $enlarge = true)
-    {
+    protected function resizeCrop(
+        ImageInterface $image,
+        string|null    $width,
+        string|null    $height,
+        bool           $enlarge = true
+    ): ManipulatorInterface {
         $size = $image->getSize();
 
         if ($enlarge === false && $size->getWidth() < $width) {
@@ -236,13 +234,14 @@ class Resizer
             $height = $size->getHeight();
         }
 
-        list($optimal_width, $optimal_height) = $this->getOptimalCrop($size, $width, $height, $enlarge);
+        [$optimal_width, $optimal_height] = $this->getOptimalCrop($size, $width, $height, $enlarge);
 
         // Find center - this will be used for the crop
         $center_x = ($optimal_width / 2) - ($width / 2);
         $center_y = ($optimal_height / 2) - ($height / 2);
 
-        return $image->resize(new Box($optimal_width, $optimal_height))
+        return $image
+            ->resize(new Box($optimal_width, $optimal_height))
             ->crop(new Point($center_x, $center_y), new Box($width, $height));
     }
 
@@ -250,14 +249,18 @@ class Resizer
      * Resize an image to an exact width and height.
      *
      * @param ImageInterface $image
-     * @param string         $width
-     * @param string         $height
+     * @param string|null    $width
+     * @param string|null    $height
      * @param bool           $enlarge
      *
      * @return ImageInterface
      */
-    protected function resizeExact(ImageInterface $image, $width, $height, $enlarge = true)
-    {
+    protected function resizeExact(
+        ImageInterface $image,
+        string|null    $width,
+        string|null    $height,
+        bool           $enlarge = true
+    ): ImageInterface {
         return $image->resize(new Box($width, $height));
     }
 
@@ -275,14 +278,18 @@ class Resizer
      * image being resized to a square).
      *
      * @param ImageInterface $image
-     * @param string         $width
-     * @param string         $height
+     * @param string|null    $width
+     * @param string|null    $height
      * @param bool           $enlarge
      *
      * @return ManipulatorInterface
      */
-    protected function resizeAuto(ImageInterface $image, $width, $height, $enlarge = true)
-    {
+    protected function resizeAuto(
+        ImageInterface $image,
+        string|null    $width,
+        string|null    $height,
+        bool           $enlarge = true
+    ): ManipulatorInterface {
         $size = $image->getSize();
         $original_width = $size->getWidth();
         $original_height = $size->getHeight();
@@ -310,12 +317,12 @@ class Resizer
      * Resize an image using a user defined callback.
      *
      * @param UploadedFile $file
-     * @param              $callable
+     * @param callable     $callable
      * @param bool         $enlarge
      *
      * @return \stdClass
      */
-    protected function resizeCustom(UploadedFile $file, $callable, $enlarge = true)
+    protected function resizeCustom(UploadedFile $file, callable $callable, bool $enlarge = true): \stdClass
     {
         return call_user_func_array($callable, [$file, $this->imagine, $enlarge]);
     }
@@ -325,14 +332,18 @@ class Resizer
      * Takes into account the image being a portrait or landscape.
      *
      * @param BoxInterface $size
-     * @param string       $width
-     * @param string       $height
+     * @param string|null  $width
+     * @param string|null  $height
      * @param bool         $enlarge
      *
      * @return array
      */
-    protected function getOptimalCrop(BoxInterface $size, $width, $height, $enlarge = true)
-    {
+    protected function getOptimalCrop(
+        BoxInterface $size,
+        string|null  $width,
+        string|null  $height,
+        bool         $enlarge = true
+    ): array {
         $height_ratio = $size->getHeight() / $height;
         $width_ratio = $size->getWidth() / $width;
 
@@ -360,9 +371,9 @@ class Resizer
      * @param string         $path
      * @param ImageInterface $image
      *
-     * @return ImageInterface $image
+     * @return ImageInterface
      */
-    protected function autoOrient($path, ImageInterface $image)
+    protected function autoOrient(string $path, ImageInterface $image): ImageInterface
     {
         if (function_exists('exif_read_data')) {
             $exif = @exif_read_data($path);
@@ -409,7 +420,7 @@ class Resizer
      *
      * @return mixed
      */
-    protected function option($key, $default = null)
+    protected function option(string $key, mixed $default = null): mixed
     {
         return Arr::get($this->options, $key, $default);
     }

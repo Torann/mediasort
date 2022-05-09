@@ -11,7 +11,7 @@ trait HasQueuing
      *
      * @return bool
      */
-    public function isQueueable()
+    public function isQueueable(): bool
     {
         return $this->config('queueable', false) == true;
     }
@@ -21,7 +21,7 @@ trait HasQueuing
      *
      * @return bool
      */
-    public function isQueued()
+    public function isQueued(): bool
     {
         if ($this->isQueueable()) {
             return ((int) $this->getAttribute('queue_state')) > Manager::QUEUE_DONE;
@@ -37,7 +37,7 @@ trait HasQueuing
      *
      * @return bool
      **/
-    public function isQueueState($state): bool
+    public function isQueueState(string $state): bool
     {
         if ($this->isQueueable() === false) {
             return false;
@@ -49,7 +49,7 @@ trait HasQueuing
             ? constant("\\Torann\\MediaSort\\Manager::QUEUE_{$state}")
             : null;
 
-        return $state !== null && ((int) $this->getAttribute('queue_state')) === $state ? true : false;
+        return $state !== null && ((int) $this->getAttribute('queue_state')) === $state;
     }
 
     /**
@@ -57,20 +57,15 @@ trait HasQueuing
      *
      * @return string
      */
-    public function getQueuedStateText()
+    public function getQueuedStateText(): string
     {
-        switch ((int) $this->getAttribute('queue_state')) {
-            case Manager::QUEUE_NA:
-                return '';
-            case Manager::QUEUE_DONE:
-                return 'done';
-            case Manager::QUEUE_WAITING:
-                return 'waiting';
-            case Manager::QUEUE_WORKING:
-                return 'working';
-            default:
-                return 'unknown';
-        }
+        return match ((int) $this->getAttribute('queue_state')) {
+            Manager::QUEUE_NA => '',
+            Manager::QUEUE_DONE => 'done',
+            Manager::QUEUE_WAITING => 'waiting',
+            Manager::QUEUE_WORKING => 'working',
+            default => 'unknown',
+        };
     }
 
     /**
@@ -78,7 +73,7 @@ trait HasQueuing
      *
      * @return string
      */
-    public function getQueuedFilePath()
+    public function getQueuedFilePath(): string
     {
         return $this->getInterpolator()
             ->interpolate(
@@ -117,20 +112,14 @@ trait HasQueuing
      *
      * @return string
      */
-    protected function queueUrl($style = '')
+    protected function queueUrl(string $style = ''): string
     {
         // Determine which dynamic image to display
-        switch ((int) $this->getAttribute('queue_state')) {
-            case self::QUEUE_WAITING:
-                $key = 'waiting_url';
-                break;
-            case self::QUEUE_FAILED:
-                $key = 'failed_url';
-                break;
-            default:
-                $key = 'loading_url';
-                break;
-        }
+        $key = match ((int) $this->getAttribute('queue_state')) {
+            self::QUEUE_WAITING => 'waiting_url',
+            self::QUEUE_FAILED => 'failed_url',
+            default => 'loading_url',
+        };
 
         if ($this->config($key)) {
             $url = $this->getInterpolator()->interpolate(

@@ -7,22 +7,15 @@ use Illuminate\Support\Arr;
 
 trait HasConfig
 {
-    /**
-     * Configuration values.
-     *
-     * @var array
-     */
-    protected $config = [];
+    protected array $config = [];
 
     /**
-     * Get configuration value.
-     *
      * @param mixed $key
      * @param mixed $default
      *
      * @return mixed
      */
-    public function config($key, $default = null)
+    public function config(mixed $key, mixed $default = null): mixed
     {
         if (is_array($key)) {
             foreach ($key as $k => $v) {
@@ -41,10 +34,11 @@ trait HasConfig
      * Merge configuration options.
      *
      * Here we'll merge user defined options with the MediaSort defaults in a cascading manner.
-     * We start with overall MediaSort options.  Next we merge in storage driver specific options.
-     * Finally we'll merge in media specific options on top of that.
+     * We start with overall MediaSort options. Next we merge in storage driver specific options.
      *
-     * @param array $config
+     * Finally, we'll merge in media specific options on top of that.
+     *
+     * @param array|null $config
      *
      * @return void
      * @throws Exception
@@ -64,7 +58,7 @@ trait HasConfig
         );
 
         // Sanity check
-        if (strpos($this->config['url'], '{id}') === false) {
+        if (str_contains($this->config['url'], '{id}') === false) {
             throw new Exception('Invalid Url: an id interpolation is required.', 1);
         }
 

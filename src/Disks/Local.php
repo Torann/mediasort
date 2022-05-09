@@ -3,44 +3,70 @@
 namespace Torann\MediaSort\Disks;
 
 use Torann\MediaSort\Manager;
+use Torann\MediaSort\Contracts\Disk;
 use Illuminate\Filesystem\FilesystemManager;
+use Illuminate\Contracts\Filesystem\Filesystem;
 
-class Local extends AbstractDisk
+class Local implements Disk
 {
+    public Manager $media;
+    public array $config = [];
+    public Filesystem $filesystem;
+
     /**
-     * Constructor method
-     *
      * @param Manager           $media
      * @param FilesystemManager $filesystem
      */
     public function __construct(Manager $media, FilesystemManager $filesystem)
     {
-        parent::__construct($media, $filesystem);
+        $this->media = $media;
+        $this->config = config("filesystems.disks.{$this->media->disk}");
+
+        // Set filesystem root
+        $this->config['root'] = $this->getLocalRoot($this->config['root'] ?? '');
 
         // Create a new instance of the local driver. Doing this will prevent
         // any setting changes made here from affecting the whole application.
         $this->filesystem = $filesystem->createLocalDriver($this->config);
-
-        // Change the prefix of the local storage
-        $this->setPathPrefix();
     }
 
     /**
-     * Set local path prefix from settings.
-     *
-     * @return void
+     * {@inheritDoc}
      */
-    protected function setPathPrefix()
+    public function remove(array $files)
+    {
+        foreach ($files as $file) {
+            try {
+                $this->filesystem->delete($file);
+            } catch (\Exception $e) {
+                // Ignore not found exceptions
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function move(string $source, string $target)
+    {
+        $this->filesystem->put(
+            $target, file_get_contents($source), $this->media->visibility
+        );
+    }
+
+    /**
+     * @param string $default
+     *
+     * @return string
+     */
+    private function getLocalRoot(string $default): string
     {
         if ($this->media->local_root) {
-            // Interpolate path
-            $root = $this->media->getInterpolator()
+            return $this->media
+                ->getInterpolator()
                 ->interpolate($this->media->local_root);
-
-            // Set path
-            $this->filesystem->getDriver()
-                ->getAdapter()
-                ->setPathPrefix($root);
         }
+
+        return $default;
     }
 }

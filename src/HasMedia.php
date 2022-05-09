@@ -1,16 +1,12 @@
 <?php
 
-namespace Torann\MediaSort\Eloquent;
+namespace Torann\MediaSort;
 
 use Exception;
 use Generator;
 use Illuminate\Support\Arr;
-use Torann\MediaSort\Manager;
 
-/**
- * @deprecated Removing in next major release, use \Torann\MediaSort\HasMedia
- */
-trait HasMediaTrait
+trait HasMedia
 {
     protected array $media_instances = [];
 

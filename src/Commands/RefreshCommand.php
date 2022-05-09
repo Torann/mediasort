@@ -9,6 +9,8 @@ use Torann\MediaSort\Services\ImageRefreshService;
 
 class RefreshCommand extends Command
 {
+    protected ImageRefreshService $image_refresh_service;
+
     /**
      * The console command name.
      *
@@ -24,35 +26,33 @@ class RefreshCommand extends Command
     protected $description = 'Regenerate images for a given model (and optional attachment and styles)';
 
     /**
-     * The image refresh service that will be used to
-     * rebuild images.
-     *
-     * @var ImageRefreshService
-     */
-    protected $imageRefreshService;
-
-    /**
      * Create a new command instance.
      *
-     * @param ImageRefreshService $imageRefreshService
+     * @param ImageRefreshService $image_refresh_service
      */
-    public function __construct(ImageRefreshService $imageRefreshService)
+    public function __construct(ImageRefreshService $image_refresh_service)
     {
         parent::__construct();
 
-        $this->imageRefreshService = $imageRefreshService;
+        $this->image_refresh_service = $image_refresh_service;
     }
 
     /**
      * Execute the console command.
      *
-     * @return void
+     * @return int
      */
     public function handle()
     {
         $this->info('Refreshing uploaded images...');
-        $this->imageRefreshService->refresh($this->argument('class'), $this->option('attachments'));
+
+        $this->image_refresh_service->refresh(
+            $this->argument('class'), $this->option('attachments')
+        );
+
         $this->info('Done!');
+
+        return 0;
     }
 
     /**

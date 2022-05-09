@@ -8,10 +8,8 @@ class MediaSortServiceProvider extends ServiceProvider
 {
     /**
      * Holds the hash value for the current MEDIASORT_NULL constant.
-     *
-     * @var string
      */
-    protected $media_sort_null;
+    protected null|string $media_sort_null = null;
 
     /**
      * Register the service provider.
@@ -91,7 +89,7 @@ class MediaSortServiceProvider extends ServiceProvider
      *
      * @return bool
      */
-    protected function isLumen()
+    protected function isLumen(): bool
     {
         return str_contains($this->app->version(), 'Lumen') === true;
     }

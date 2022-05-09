@@ -2,13 +2,16 @@
 
 namespace Torann\MediaSort\Commands;
 
+use Illuminate\Support\Str;
 use Illuminate\View\Factory;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
-use Symfony\Component\Console\Input\InputArgument;
 
 class FastenCommand extends Command
 {
+    protected Factory $view;
+    protected Filesystem $file;
+
     /**
      * The name and signature of the console command.
      *
@@ -17,7 +20,7 @@ class FastenCommand extends Command
     protected $signature = 'media:fasten
                                 {table : The name of the database table the file fields will be added to.}
                                 {attachment : The name of the corresponding MediaSort attachment.}
-                                {--queueable : Attachement will support queueing.}';
+                                {--queueable : Attachment will support queueing.}';
 
     /**
      * The console command description.
@@ -25,20 +28,6 @@ class FastenCommand extends Command
      * @var string
      */
     protected $description = 'Generate a migration for adding MediaSort file fields to a database table.';
-
-    /**
-     * An instance of Laravel's view factory.
-     *
-     * @var \Illuminate\View\Factory
-     */
-    protected $view;
-
-    /**
-     * An instance of Laravel's filesystem.
-     *
-     * @var \Illuminate\Filesystem\Filesystem
-     */
-    protected $file;
 
     /**
      * Create a new command instance.
@@ -57,7 +46,7 @@ class FastenCommand extends Command
     /**
      * Execute the console command.
      *
-     * @return void
+     * @return int
      */
     public function handle()
     {
@@ -67,15 +56,24 @@ class FastenCommand extends Command
             'queueable' => $this->option('queueable'),
         ];
 
+        // Convert name to class
+        $data['class_name'] = Str::studly($data['table']);
+
         // Create filename
-        $file = base_path("database/migrations/" . date('Y_m_d_His')
+        $file = base_path('database/migrations/'
+            . date('Y_m_d_His')
             . "_add_{$data['attachment']}_fields_to_{$data['table']}_table.php");
 
         // Save the new migration to disk using the MediaSort migration view.
-        $migration = $this->view->file(realpath(__DIR__ . '/../../resources/views/migration.blade.php'), $data)->render();
+        $migration = $this->view
+            ->file(realpath(__DIR__ . '/../../resources/views/migration.blade.php'), $data)
+            ->render();
+
         $this->file->put($file, $migration);
 
         // Print a created migration message to the console.
         $this->info("Created migration: $file");
+
+        return 0;
     }
 }

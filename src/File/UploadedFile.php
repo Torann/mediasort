@@ -5,12 +5,10 @@ namespace Torann\MediaSort\File;
 class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
 {
     /**
-     * An array of key value pairs for valid image
-     * extensions and their associated MIME types.
-     *
-     * @var array
+     * An array of key value pairs for valid image extensions and their
+     * associated MIME types.
      */
-    protected $image_mimes = [
+    protected array $image_mimes = [
         'bmp' => 'image/bmp',
         'gif' => 'image/gif',
         'jpeg' => ['image/jpeg', 'image/pjpeg'],
@@ -25,16 +23,16 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
      *
      * @return bool
      */
-    public function isImage()
+    public function isImage(): bool
     {
-        $mime = $this->getMimeType();
-
         // The $image_mimes property contains an array of file extensions and
         // their associated MIME types. We will loop through them and look for
         // the MIME type of the current UploadedFile.
-        foreach ($this->image_mimes as $image_mime) {
-            if (in_array($mime, (array) $image_mime)) {
-                return true;
+        if ($mime = $this->getMimeType()) {
+            foreach ($this->image_mimes as $image_mime) {
+                if (in_array($mime, (array) $image_mime)) {
+                    return true;
+                }
             }
         }
 
@@ -42,40 +40,13 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
     }
 
     /**
-     * Returns an informative upload error message.
+     * Returns locale independent base name of the given path.
      *
-     * @param int $code
+     * @param string $name
      *
      * @return string
      */
-    public function getErrorMessage($code = null)
-    {
-        $code = $code ?: $this->$code;
-
-        static $errors = [
-            UPLOAD_ERR_INI_SIZE => 'The file "%s" exceeds your upload_max_filesize ini directive (limit is %d kb).',
-            UPLOAD_ERR_FORM_SIZE => 'The file "%s" exceeds the upload limit defined in your form.',
-            UPLOAD_ERR_PARTIAL => 'The file "%s" was only partially uploaded.',
-            UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
-            UPLOAD_ERR_CANT_WRITE => 'The file "%s" could not be written on disk.',
-            UPLOAD_ERR_NO_TMP_DIR => 'File could not be uploaded: missing temporary directory.',
-            UPLOAD_ERR_EXTENSION => 'File upload was stopped by a php extension.',
-        ];
-
-        $max_file_size = $code === UPLOAD_ERR_INI_SIZE ? self::getMaxFilesize() / 1024 : 0;
-        $message = isset($errors[$code]) ? $errors[$code] : 'The file "%s" was not uploaded due to an unknown error.';
-
-        return sprintf($message, $this->getClientOriginalName(), $max_file_size);
-    }
-
-    /**
-     * Returns locale independent base name of the given path.
-     *
-     * @param string $name The new file name
-     *
-     * @return string containing
-     */
-    protected function getName($name)
+    protected function getName(string $name): string
     {
         $name = parent::getName($name);
 
