@@ -6,17 +6,10 @@ use Illuminate\Support\Str;
 
 class Interpolator
 {
-    /**
-     * Manager instance.
-     *
-     * @var \Torann\MediaSort\Manager
-     */
-    protected $manager;
+    protected Manager $manager;
 
     /**
-     * Constructor method
-     *
-     * @param \Torann\MediaSort\Manager $manager
+     * @param Manager $manager
      */
     public function __construct(Manager $manager)
     {
@@ -31,17 +24,17 @@ class Interpolator
      *
      * @return string
      */
-    public function interpolate($string, $style = '')
+    public function interpolate(string $string, string $style = ''): string
     {
         return preg_replace_callback("/{(([[:alnum:]]|_|\.|-)+)?}/", function ($match) use ($style) {
             $key = $match[1];
 
             // Create local method call.
-            $method = 'get' . studly_case($key);
+            $method = 'get' . Str::studly($key);
 
             // Check for a custom interpolator value.
             if (method_exists($this, $method)) {
-                return $this->$method($style);
+                return $this->{$method}($style);
             }
 
             // Check for an interpolator override
@@ -58,7 +51,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function getFilename()
+    protected function getFilename(): string
     {
         return $this->manager->getAttribute('filename');
     }
@@ -68,7 +61,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function getQueueState()
+    protected function getQueueState(): string
     {
         return $this->manager->getQueuedStateText();
     }
@@ -78,7 +71,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function getClass()
+    protected function getClass(): string
     {
         return strtolower($this->handleBackslashes(
             get_class($this->manager->getModel())
@@ -90,7 +83,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function getBasename()
+    protected function getBasename(): string
     {
         return pathinfo($this->getFilename(), PATHINFO_FILENAME);
     }
@@ -100,7 +93,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function getExtension()
+    protected function getExtension(): string
     {
         return pathinfo($this->getFilename(), PATHINFO_EXTENSION);
     }
@@ -108,9 +101,9 @@ class Interpolator
     /**
      * Returns the id of the current model.
      *
-     * @return string
+     * @return mixed
      */
-    protected function getId()
+    protected function getId(): mixed
     {
         if ($key = $this->manager->config('model_primary_key')) {
             return $this->manager->getModel()->{$key};
@@ -125,7 +118,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function getMedia()
+    protected function getMedia(): string
     {
         return Str::plural($this->manager->name);
     }
@@ -137,17 +130,17 @@ class Interpolator
      *
      * @return string
      */
-    protected function getStyle($style = '')
+    protected function getStyle(string $style = ''): string
     {
         return $style ?: $this->manager->config('default_style');
     }
 
     /**
-     * Returns the the applications base URL.
+     * Return the applications base URL.
      *
      * @return string
      */
-    protected function getAppUrl()
+    protected function getAppUrl(): string
     {
         return url('/');
     }
@@ -157,7 +150,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function getLaravelRoot()
+    protected function getLaravelRoot(): string
     {
         return realpath(base_path());
     }
@@ -165,13 +158,13 @@ class Interpolator
     /**
      * Return attribute from model.
      *
-     * @param string $string
+     * @param string $key
      *
-     * @return string
+     * @return mixed
      */
-    public function getAttribute($string)
+    public function getAttribute(string $key): mixed
     {
-        return $this->manager->getModel()->getAttribute($string);
+        return $this->manager->getModel()->getAttribute($key);
     }
 
     /**
@@ -182,7 +175,7 @@ class Interpolator
      *
      * @return string
      */
-    protected function handleBackslashes($string)
+    protected function handleBackslashes(string $string): string
     {
         return str_replace('\\', '/', ltrim($string, '\\'));
     }

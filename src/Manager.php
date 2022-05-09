@@ -3,10 +3,10 @@
 namespace Torann\MediaSort;
 
 use Exception;
-use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Model;
 
 /**
+ * @property string $disk
  * @property string $local_root
  * @property string $url
  * @property string $prefix_url
@@ -42,27 +42,16 @@ class Manager
     const QUEUE_WORKING = 3;
     const QUEUE_FAILED = 4;
 
-    /**
-     * Media identifier.
-     *
-     * @var string
-     */
-    public $name;
+    public string $name;
+    protected Model|null $model = null;
 
     /**
-     * The model the attachment belongs to.
-     *
-     * @var Model
-     */
-    protected $model;
-
-    /**
-     * @param string $name
-     * @param array  $config
+     * @param string     $name
+     * @param array|null $config
      *
      * @throws Exception
      */
-    public function __construct($name, array $config = null)
+    public function __construct(string $name, array $config = null)
     {
         $this->name = $name;
 
@@ -77,7 +66,7 @@ class Manager
      *
      * @return self
      */
-    public function setModel($model)
+    public function setModel(Model $model)
     {
         $this->model = $model;
 
@@ -87,9 +76,9 @@ class Manager
     /**
      * Return the underlying model object for this attachment.
      *
-     * @return Model
+     * @return Model|null
      */
-    public function getModel()
+    public function getModel(): Model|null
     {
         return $this->model;
     }
@@ -101,7 +90,7 @@ class Manager
      *
      * @return string
      */
-    public function url($style = '')
+    public function url(string $style = ''): string
     {
         if ($this->isQueued()) {
             return $this->queueUrl($style);
@@ -123,7 +112,7 @@ class Manager
      *
      * @return string
      */
-    public function path($style = '')
+    public function path(string $style = ''): string
     {
         if ($this->getAttribute('filename')) {
             return $this->getInterpolator()->interpolate($this->url, $style);
@@ -140,7 +129,7 @@ class Manager
      *
      * @return array|null
      */
-    public function toArray($skip_empty = false, $include_original = true)
+    public function toArray(bool $skip_empty = false, bool $include_original = true): array|null
     {
         // Skip when no media
         if ($skip_empty === true && $this->hasMedia() === false) {
@@ -167,7 +156,7 @@ class Manager
      *
      * @return bool
      */
-    public function hasMedia()
+    public function hasMedia(): bool
     {
         if ($this->getAttribute('filename') && $this->path()) {
             return $this->isQueued() === false;
@@ -183,7 +172,7 @@ class Manager
      *
      * @return mixed
      */
-    public function getAttribute($key)
+    public function getAttribute(string $key): mixed
     {
         // Sanitize the key
         $key = preg_replace('/^_/', '', $key);
@@ -207,7 +196,7 @@ class Manager
      *
      * @return Interpolator
      */
-    public function getInterpolator()
+    public function getInterpolator(): Interpolator
     {
         return new Interpolator($this);
     }
@@ -218,7 +207,7 @@ class Manager
      * @param string $key
      * @param mixed  $value
      */
-    public function __set($key, $value)
+    public function __set(string $key, mixed $value)
     {
         $this->config([$key => $value]);
     }
@@ -230,7 +219,7 @@ class Manager
      *
      * @return mixed
      */
-    public function __get($key)
+    public function __get(string $key)
     {
         return $this->config($key);
     }
@@ -242,10 +231,11 @@ class Manager
      *
      * @return string
      */
-    protected function defaultUrl($style = '')
+    protected function defaultUrl(string $style = ''): string
     {
         if ($this->config('default_url')) {
-            $url = $this->getInterpolator()->interpolate($this->config('default_url'), $style);
+            $url = $this->getInterpolator()
+                ->interpolate($this->config('default_url'), $style);
 
             return parse_url($url, PHP_URL_HOST) ? $url : $this->config('prefix_url') . $url;
         }
@@ -256,11 +246,11 @@ class Manager
     /**
      * Transform an array into path.
      *
-     * @param mixed $args
+     * @param array $args
      *
      * @return string
      */
-    protected function joinPaths(...$args)
+    protected function joinPaths(...$args): string
     {
         return rtrim(preg_replace('/\/{2,}/', '/', join('/', $args)), '/');
     }

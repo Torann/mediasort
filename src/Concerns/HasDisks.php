@@ -3,16 +3,12 @@
 namespace Torann\MediaSort\Concerns;
 
 use Illuminate\Container\Container;
+use Torann\MediaSort\Contracts\Disk;
 use Torann\MediaSort\Exceptions\InvalidClassException;
 
 trait HasDisks
 {
-    /**
-     * An instance of the disk.
-     *
-     * @var \Torann\MediaSort\Disks\AbstractDisk.
-     */
-    protected $disk_instance;
+    protected null|Disk $disk_instance = null;
 
     /**
      * Set disk property.
@@ -21,7 +17,7 @@ trait HasDisks
      *
      * @return self
      */
-    public function setDisk($name)
+    public function setDisk(string $name)
     {
         $this->__set('disk', $name);
 
@@ -31,10 +27,11 @@ trait HasDisks
     /**
      * Get disk instance.
      *
-     * @return \Torann\MediaSort\Disks\AbstractDisk
+     * @return Disk
      * @throws InvalidClassException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function getDisk()
+    public function getDisk(): Disk
     {
         if ($this->disk_instance === null) {
             // Create disk class
@@ -46,7 +43,9 @@ trait HasDisks
             }
 
             // Create disk instance
-            $this->disk_instance = Container::getInstance()->makeWith($class, ['media' => $this]);
+            $this->disk_instance = Container::getInstance()->makeWith(
+                $class, ['media' => $this]
+            );
         }
 
         return $this->disk_instance;
@@ -58,8 +57,9 @@ trait HasDisks
      * @param array $files
      *
      * @throws InvalidClassException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    protected function remove($files)
+    protected function remove(array $files)
     {
         $this->getDisk()->remove($files);
     }
@@ -72,8 +72,9 @@ trait HasDisks
      * @param string $target
      *
      * @throws InvalidClassException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    protected function move($source, $target)
+    protected function move(string $source, string $target)
     {
         $this->getDisk()->move($source, $target);
     }

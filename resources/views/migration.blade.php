@@ -4,7 +4,7 @@ use Torann\MediaSort\Manager;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class Add{{ ucfirst($attachment) }}FieldsTo{{ studly_case($table) }}Table extends Migration
+class Add{{ ucfirst($attachment) }}FieldsTo{{ $class_name }}Table extends Migration
 {
     /**
      * Make changes to the table.

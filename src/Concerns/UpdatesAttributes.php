@@ -4,24 +4,14 @@ namespace Torann\MediaSort\Concerns;
 
 use Illuminate\Support\Arr;
 use Torann\MediaSort\File\FileManager;
+use Torann\MediaSort\File\UploadedFile;
 use Illuminate\Database\Eloquent\Model;
 use Torann\MediaSort\File\Image\Resizer;
 
 trait UpdatesAttributes
 {
-    /**
-     * The uploaded file object for the attachment.
-     *
-     * @var \Torann\MediaSort\File\UploadedFile
-     */
-    protected $uploaded_file;
-
-    /**
-     * Tasks to perform.
-     *
-     * @var array
-     */
-    protected $tasks = [];
+    protected UploadedFile $uploaded_file;
+    protected array $tasks = [];
 
     /**
      * Setup up the tasks for saving.
@@ -31,7 +21,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    public function beforeSave($file)
+    public function beforeSave(mixed $file)
     {
         // If set, this just clears the image.
         if ($file == MEDIASORT_NULL) {
@@ -71,7 +61,7 @@ trait UpdatesAttributes
     }
 
     /**
-     * Process the delete task.
+     * Process the "delete" tasks.
      *
      * @return void
      */
@@ -89,7 +79,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    public function destroy($styles = [])
+    public function destroy(array $styles = [])
     {
         $this->clear($styles);
 
@@ -104,7 +94,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    public function setUploadedFile($file)
+    public function setUploadedFile(mixed $file)
     {
         $this->uploaded_file = $this->getUploadedFile($file);
     }
@@ -116,7 +106,7 @@ trait UpdatesAttributes
      *
      * @return array
      */
-    protected function getTask($task)
+    protected function getTask(string $task): array
     {
         return (array) Arr::get($this->tasks, $task, []);
     }
@@ -126,8 +116,10 @@ trait UpdatesAttributes
      *
      * @param string       $task
      * @param string|array $value
+     *
+     * @return void
      */
-    protected function setTask($task, $value)
+    protected function setTask(string $task, string|array $value)
     {
         // Ensure the value is an array
         if (is_array($value) === false) {
@@ -143,8 +135,10 @@ trait UpdatesAttributes
      * Reset the provided task.
      *
      * @param string $task
+     *
+     * @return void
      */
-    protected function resetTask($task)
+    protected function resetTask(string $task)
     {
         $this->tasks[$task] = [];
     }
@@ -157,7 +151,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    protected function queueUploadedFile($file)
+    protected function queueUploadedFile(mixed $file)
     {
         $this->setUploadedFile($file);
 
@@ -200,7 +194,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    protected function addUploadedFile($file)
+    protected function addUploadedFile(mixed $file)
     {
         $this->clear();
 
@@ -247,6 +241,7 @@ trait UpdatesAttributes
      *
      * @return void
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function save()
     {
@@ -263,6 +258,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function reprocess()
     {
@@ -283,22 +279,23 @@ trait UpdatesAttributes
                 $file = $file->getRealPath();
             }
 
-            $filePath = $this->path($name);
-            $this->move($file, $filePath);
+            $this->move($file, $this->path($name));
         }
     }
 
     /**
      * Trigger queued files for processing.
      *
-     * @param Model  $model
-     * @param string $path
-     * @param bool   $cleanup
+     * @param Model       $model
+     * @param string|null $path
+     * @param bool        $cleanup
      *
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
+     * @throws \Torann\MediaSort\Exceptions\InvalidClassException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function processQueue(Model $model, $path = null, bool $cleanup = true)
+    public function processQueue(Model $model, string $path = null, bool $cleanup = true)
     {
         $this->setModel($model);
 
@@ -327,7 +324,7 @@ trait UpdatesAttributes
      * @return Resizer
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    public function getResizer()
+    public function getResizer(): Resizer
     {
         $options = [
             'image_quality' => $this->config('image_quality'),
@@ -345,6 +342,7 @@ trait UpdatesAttributes
      *
      * @return void
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     protected function flushWrites()
     {
@@ -364,8 +362,8 @@ trait UpdatesAttributes
             }
 
             // Only move it real
-            if ($filePath = $this->path($name)) {
-                $this->move($file, $filePath);
+            if ($file_path = $this->path($name)) {
+                $this->move($file, $file_path);
             }
         }
 
@@ -382,7 +380,11 @@ trait UpdatesAttributes
      */
     protected function flushDeletes()
     {
-        $this->remove($this->getTask('deletion'));
+        try {
+            $this->remove($this->getTask('deletion'));
+        } catch (\Exception $e) {
+            //
+        }
 
         $this->resetTask('deletion');
     }
@@ -395,13 +397,13 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    protected function taskSomeForDeletion($styles)
+    protected function taskSomeForDeletion(array $styles)
     {
-        $filePaths = array_map(function ($style) {
+        $file_paths = array_map(function ($style) {
             return $this->path($style);
         }, $styles);
 
-        $this->setTask('deletion', $filePaths);
+        $this->setTask('deletion', $file_paths);
     }
 
     /**
@@ -442,7 +444,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    protected function modelWrite($property, $value)
+    protected function modelWrite(string $property, mixed $value)
     {
         $field = "{$this->name}_{$property}";
 
@@ -451,7 +453,7 @@ trait UpdatesAttributes
             $this->getModel()->setAttribute($field, $value);
         }
 
-        // Queue attributes are optional and outside of the fillable,
+        // Queue attributes are optional and outside the fillable,
         // because of this they are always set.
         elseif (preg_match('/^queue(d?)_/', $property)) {
             if ($this->isQueueable()) {
@@ -473,10 +475,10 @@ trait UpdatesAttributes
      *
      * @param mixed $file
      *
-     * @return \Torann\MediaSort\File\UploadedFile
+     * @return UploadedFile
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    protected function getUploadedFile($file)
+    protected function getUploadedFile(mixed $file): UploadedFile
     {
         return (new FileManager())->make($file);
     }

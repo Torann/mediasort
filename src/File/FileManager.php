@@ -3,6 +3,7 @@
 namespace Torann\MediaSort\File;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Torann\MediaSort\Exceptions\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
@@ -16,7 +17,7 @@ class FileManager
      * @return UploadedFile
      * @throws FileException
      */
-    public function make($file)
+    public function make(mixed $file): UploadedFile
     {
         if ($file instanceof SymfonyUploadedFile) {
             return $this->createFromObject($file);
@@ -46,7 +47,7 @@ class FileManager
      * @return UploadedFile
      * @throws FileException
      */
-    protected function createFromObject(SymfonyUploadedFile $file)
+    protected function createFromObject(SymfonyUploadedFile $file): UploadedFile
     {
         $upload_file = new UploadedFile(
             $file->getPathname(),
@@ -58,9 +59,7 @@ class FileManager
         // Throw error if the object is not valid
         if ($upload_file->isValid() === false) {
             throw new FileException(
-                $upload_file->getErrorMessage(
-                    $upload_file->getError()
-                )
+                $upload_file->getErrorMessage()
             );
         }
 
@@ -71,15 +70,15 @@ class FileManager
      * Build a Torann\MediaSort\File\UploadedFile object from a
      * base64 encoded image array. Usually from an API request.
      *
-     * @param array  $filename
+     * @param string $filename
      * @param string $data
      *
      * @return UploadedFile
      */
-    protected function createFromBase64($filename, $data)
+    protected function createFromBase64(string $filename, string $data): UploadedFile
     {
         // Get temporary destination
-        $destination = sys_get_temp_dir() . '/' . str_random(4) . '-' . $filename;
+        $destination = sys_get_temp_dir() . '/' . Str::random(4) . '-' . $filename;
 
         // Create destination if not already there
         if (is_dir(dirname($destination)) === false) {
@@ -96,14 +95,14 @@ class FileManager
     }
 
     /**
-     * Build a Torann\MediaSort\File\UploadedFile object from the
+     * Build a \Torann\MediaSort\File\UploadedFile object from the
      * raw php $_FILES array date.
      *
      * @param array $file
      *
      * @return UploadedFile
      */
-    protected function createFromArray($file)
+    protected function createFromArray(array $file): UploadedFile
     {
         return new UploadedFile(
             $file['tmp_name'],
@@ -114,20 +113,20 @@ class FileManager
 
     /**
      * Fetch a remote file using a string URL and convert it into
-     * an instance of Torann\MediaSort\File\UploadedFile.
+     * an instance of \Torann\MediaSort\File\UploadedFile.
      *
      * @param string $file
      *
      * @return UploadedFile
      */
-    protected function createFromUrl($file)
+    protected function createFromUrl(string $file): UploadedFile
     {
         $ch = curl_init();
 
         curl_setopt_array($ch, [
             CURLOPT_URL => $file,
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36',
             CURLOPT_FOLLOWLOCATION => 1,
         ]);
 
@@ -151,13 +150,6 @@ class FileManager
             $name = $name . '.' . $this->getExtension($mime);
         }
 
-        // Get the length of the file
-        if (function_exists('mb_strlen')) {
-            $size = mb_strlen($raw_file, '8bit');
-        } else {
-            $size = strlen($raw_file);
-        }
-
         return new UploadedFile($file_path, $name, $mime);
     }
 
@@ -169,7 +161,7 @@ class FileManager
      *
      * @return UploadedFile
      */
-    protected function createFromString($file)
+    protected function createFromString(string $file): UploadedFile
     {
         return new UploadedFile($file, basename($file));
     }
@@ -177,11 +169,11 @@ class FileManager
     /**
      * Get the file extension based on the mime type.
      *
-     * @param $mime_type
+     * @param string $mime_type
      *
      * @return string
      */
-    protected function getExtension($mime_type)
+    protected function getExtension(string $mime_type): string
     {
         return Arr::get([
             'image/jpeg' => 'jpg',
