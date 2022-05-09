@@ -1,5 +1,6 @@
 # MediaSort
 
+[![Build Status](https://app.travis-ci.com/Torann/mediasort.svg?branch=2.x)](https://app.travis-ci.com/Torann/mediasort)
 [![Latest Stable Version](https://poser.pugx.org/torann/mediasort/v/stable.png)](https://packagist.org/packages/torann/mediasort)
 [![Total Downloads](https://poser.pugx.org/torann/mediasort/downloads.png)](https://packagist.org/packages/torann/mediasort)
 [![Patreon donate button](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://www.patreon.com/torann)
