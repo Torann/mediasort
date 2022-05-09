@@ -24,7 +24,7 @@ trait HasMedia
      *
      * @return void
      */
-    public static function bootHasMediaTrait()
+    public static function bootHasMedia()
     {
         static::saving(function ($instance) {
             /** @var self $instance */
