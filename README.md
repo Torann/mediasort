@@ -18,8 +18,8 @@ Documentation for the package can be found on [Lyften.com](http://lyften.com/pro
 
 ## Laravel Versions
 
-- Laravel 7.0-8.0 - [version 1.2](https://github.com/Torann/mediasort/tree/1.5)
-- Laravel 6.0 - [version 1.2](https://github.com/Torann/mediasort/tree/1.3)
+- Laravel 7.0-8.0 - [version 1.5](https://github.com/Torann/mediasort/tree/1.5)
+- Laravel 6.0 - [version 1.3](https://github.com/Torann/mediasort/tree/1.3)
 - Laravel 5.5 - [version 1.2](https://github.com/Torann/mediasort/tree/1.2)
 - Laravel 5 - [version 1.1](https://github.com/Torann/mediasort/tree/1.1)
 - Laravel 4 - [version 0.1](https://github.com/Torann/mediasort/tree/0.1)
