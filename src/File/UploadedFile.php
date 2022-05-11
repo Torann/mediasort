@@ -2,11 +2,12 @@
 
 namespace Torann\MediaSort\File;
 
+use Torann\MediaSort\Exceptions\FileException;
+
 class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
 {
     /**
-     * An array of key value pairs for valid image extensions and their
-     * associated MIME types.
+     * An array of key value pairs for valid image extensions and their associated MIME types.
      */
     protected array $image_mimes = [
         'bmp' => 'image/bmp',
@@ -17,6 +18,45 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
         'png' => 'image/png',
         'webp' => 'image/webp',
     ];
+
+    /**
+     * @var array
+     */
+    protected array $banned_extensions = [
+        'exe', 'bat', 'bin',
+        'php', 'sh', 'unknown',
+    ];
+
+    /**
+     * {@inheritDoc}
+     *
+     * @throws FileException
+     */
+    public function __construct(
+        string $path,
+        string $originalName,
+        string $mimeType = null,
+        int    $error = null,
+        bool   $test = false
+    ) {
+        parent::__construct($path, $originalName, $mimeType, $error, $test);
+
+        if ($this->allowed() === false) {
+            throw new FileException('File type is not permitted.');
+        }
+    }
+
+    /**
+     * Determine if the file extension allowed.
+     *
+     * @return bool
+     */
+    public function allowed(): bool
+    {
+        $extension = $this->guessExtension();
+
+        return $extension && in_array($extension, $this->banned_extensions) === false;
+    }
 
     /**
      * Utility method for detecing whether a given file upload is an image.
