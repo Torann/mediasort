@@ -2,8 +2,8 @@
 
 namespace Torann\MediaSort\File;
 
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Symfony\Component\Mime\MimeTypes;
 use Torann\MediaSort\Exceptions\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
@@ -74,6 +74,7 @@ class FileManager
      * @param string $data
      *
      * @return UploadedFile
+     * @throws FileException
      */
     protected function createFromBase64(string $filename, string $data): UploadedFile
     {
@@ -101,6 +102,7 @@ class FileManager
      * @param array $file
      *
      * @return UploadedFile
+     * @throws FileException
      */
     protected function createFromArray(array $file): UploadedFile
     {
@@ -118,6 +120,7 @@ class FileManager
      * @param string $file
      *
      * @return UploadedFile
+     * @throws FileException
      */
     protected function createFromUrl(string $file): UploadedFile
     {
@@ -134,20 +137,19 @@ class FileManager
 
         curl_close($ch);
 
-        // Get the mime type of the file
-        $size_info = getimagesizefromstring($raw_file);
-        $mime = $size_info['mime'];
-
         // Create a file path for the file by storing it on disk.
         $file_path = @tempnam(sys_get_temp_dir(), 'STP');
         file_put_contents($file_path, $raw_file);
+
+        // Get the mime type of the file
+        $mime = $this->getMimeType($file_path);
 
         // Get the original filename
         $name = strtok(pathinfo($file, PATHINFO_BASENAME), '?');
 
         // Append missing file extension
         if (empty(pathinfo($file, PATHINFO_EXTENSION))) {
-            $name = $name . '.' . $this->getExtension($mime);
+            $name = "{$name}." . $this->getExtension($mime);
         }
 
         return new UploadedFile($file_path, $name, $mime);
@@ -160,10 +162,23 @@ class FileManager
      * @param string $file
      *
      * @return UploadedFile
+     * @throws FileException
      */
     protected function createFromString(string $file): UploadedFile
     {
         return new UploadedFile($file, basename($file));
+    }
+
+    /**
+     * Returns the mime type of the file.
+     *
+     * @param string $path_name
+     *
+     * @return string
+     */
+    public function getMimeType(string $path_name): string
+    {
+        return MimeTypes::getDefault()->guessMimeType($path_name) ?? '';
     }
 
     /**
@@ -175,7 +190,7 @@ class FileManager
      */
     protected function getExtension(string $mime_type): string
     {
-        return Arr::get([
+        return match ($mime_type) {
             'image/jpeg' => 'jpg',
             'image/gif' => 'gif',
             'image/png' => 'png',
@@ -185,6 +200,7 @@ class FileManager
             'image/x-xbm' => 'xbm',
             'image/webp' => 'webp',
             'image/apng' => 'apng',
-        ], $mime_type, 'png');
+            default => MimeTypes::getDefault()->getExtensions($mime_type)[0] ?? 'unknown',
+        };
     }
 }
