@@ -53,9 +53,7 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
      */
     public function allowed(): bool
     {
-        $extension = $this->guessExtension();
-
-        return $extension && in_array($extension, $this->banned_extensions) === false;
+        return in_array($this->getExtension(), $this->banned_extensions) === false;
     }
 
     /**
