@@ -173,11 +173,11 @@ trait UpdatesAttributes
 
             // Ensure the target directory exists
             if (is_dir(dirname($target)) === false) {
-                mkdir(dirname($target), 0777, true);
+                @mkdir(dirname($target), 0777, true);
             }
 
             // Move the file
-            rename($this->uploaded_file->getRealPath(), $target);
+            @rename($this->uploaded_file->getRealPath(), $target);
         }
 
         // Save the information for later
