@@ -129,7 +129,7 @@ class FileManager
         curl_setopt_array($ch, [
             CURLOPT_URL => $file,
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
             CURLOPT_FOLLOWLOCATION => 1,
         ]);
 
