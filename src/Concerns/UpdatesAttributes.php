@@ -7,6 +7,8 @@ use Torann\MediaSort\File\FileManager;
 use Torann\MediaSort\File\UploadedFile;
 use Illuminate\Database\Eloquent\Model;
 use Torann\MediaSort\File\Image\Resizer;
+use Torann\MediaSort\Contracts\MimeTypeGuesser;
+use Symfony\Component\Mime\MimeTypeGuesserInterface;
 
 trait UpdatesAttributes
 {
@@ -21,7 +23,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    public function beforeSave(mixed $file)
+    public function beforeSave(mixed $file): void
     {
         // If set, this just clears the image.
         if ($file == MEDIASORT_NULL) {
@@ -45,7 +47,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    public function afterSave()
+    public function afterSave(): void
     {
         $this->save();
     }
@@ -55,7 +57,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    public function beforeDelete()
+    public function beforeDelete(): void
     {
         $this->clear();
     }
@@ -65,7 +67,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    public function afterDelete()
+    public function afterDelete(): void
     {
         $this->flushDeletes();
     }
@@ -79,7 +81,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      */
-    public function destroy(array $styles = [])
+    public function destroy(array $styles = []): void
     {
         $this->clear($styles);
 
@@ -94,7 +96,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    public function setUploadedFile(mixed $file)
+    public function setUploadedFile(mixed $file): void
     {
         $this->uploaded_file = $this->getUploadedFile($file);
     }
@@ -119,7 +121,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    protected function setTask(string $task, string|array $value)
+    protected function setTask(string $task, string|array $value): void
     {
         // Ensure the value is an array
         if (is_array($value) === false) {
@@ -138,7 +140,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    protected function resetTask(string $task)
+    protected function resetTask(string $task): void
     {
         $this->tasks[$task] = [];
     }
@@ -151,7 +153,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    protected function queueUploadedFile(mixed $file)
+    protected function queueUploadedFile(mixed $file): void
     {
         $this->setUploadedFile($file);
 
@@ -194,7 +196,7 @@ trait UpdatesAttributes
      * @return void
      * @throws \Torann\MediaSort\Exceptions\FileException
      */
-    protected function addUploadedFile(mixed $file)
+    protected function addUploadedFile(mixed $file): void
     {
         $this->clear();
 
@@ -202,12 +204,11 @@ trait UpdatesAttributes
 
         // Get the original values
         $filename = $this->uploaded_file->getClientOriginalName();
-        $content_type = $this->uploaded_file->getMimeType();
 
         // Set model attributes
         $this->modelWrite('file_name', $filename);
         $this->modelWrite('file_size', $this->uploaded_file->getSize());
-        $this->modelWrite('content_type', $content_type);
+        $this->modelWrite('content_type', $this->guessMimeType());
         $this->modelWrite('updated_at', date('Y-m-d H:i:s'));
 
         // Set model queue attributes
@@ -226,7 +227,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    public function clear(array $styles = [])
+    public function clear(array $styles = []): void
     {
         if (empty($styles) === false) {
             $this->taskSomeForDeletion($styles);
@@ -243,7 +244,7 @@ trait UpdatesAttributes
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function save()
+    public function save(): void
     {
         if ($this->config('keep_old_files', false) === false) {
             $this->flushDeletes();
@@ -260,7 +261,7 @@ trait UpdatesAttributes
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function reprocess()
+    public function reprocess(): void
     {
         if (empty($this->getAttribute('filename'))) {
             return;
@@ -295,7 +296,7 @@ trait UpdatesAttributes
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function processQueue(Model $model, string $path = null, bool $cleanup = true)
+    public function processQueue(Model $model, string|null $path = null, bool $cleanup = true): void
     {
         $this->setModel($model);
 
@@ -344,7 +345,7 @@ trait UpdatesAttributes
      * @throws \Torann\MediaSort\Exceptions\InvalidClassException
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    protected function flushWrites()
+    protected function flushWrites(): void
     {
         // Skip this if there aren't any write tasks
         if (count($this->getTask('write')) === 0) {
@@ -378,7 +379,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    protected function flushDeletes()
+    protected function flushDeletes(): void
     {
         try {
             $this->remove($this->getTask('deletion'));
@@ -390,6 +391,26 @@ trait UpdatesAttributes
     }
 
     /**
+     * @return string
+     */
+    protected function guessMimeType(): string
+    {
+        $guesser = $this->config('mime_type_guesser');
+
+        if (class_exists($guesser)) {
+            $instance = new $guesser();
+
+            if ($instance instanceof MimeTypeGuesser) {
+                return $instance->guess($this->uploaded_file);
+            }
+
+            throw new \Exception('Guesser must implement MimeTypeGuesser');
+        }
+
+        return $this->uploaded_file->getMimeType();
+    }
+
+    /**
      * Add a subset (filtered via style) of the uploaded files for this attachment
      * to the deletion task.
      *
@@ -397,7 +418,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    protected function taskSomeForDeletion(array $styles)
+    protected function taskSomeForDeletion(array $styles): void
     {
         $file_paths = array_map(function ($style) {
             return $this->path($style);
@@ -411,7 +432,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    protected function taskAllForDeletion()
+    protected function taskAllForDeletion(): void
     {
         if (empty($this->getAttribute('filename'))) {
             return;
@@ -444,7 +465,7 @@ trait UpdatesAttributes
      *
      * @return void
      */
-    protected function modelWrite(string $property, mixed $value)
+    protected function modelWrite(string $property, mixed $value): void
     {
         $field = "{$this->name}_{$property}";
 

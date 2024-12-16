@@ -270,4 +270,15 @@ return [
 
     'interpolate' => [],
 
+    /*
+    |--------------------------------------------------------------------------
+    | MIME Type Guess
+    |--------------------------------------------------------------------------
+    |
+    | When null the package will use Symfony MIME guesser.
+    |
+    */
+
+    'mime_type_guesser' => null,
+
 ];
