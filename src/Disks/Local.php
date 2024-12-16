@@ -33,7 +33,7 @@ class Local implements Disk
     /**
      * {@inheritDoc}
      */
-    public function remove(array $files)
+    public function remove(array $files): void
     {
         foreach ($files as $file) {
             try {
@@ -47,11 +47,17 @@ class Local implements Disk
     /**
      * {@inheritDoc}
      */
-    public function move(string $source, string $target)
+    public function move(string $source, string $target): void
     {
-        $this->filesystem->put(
-            $target, file_get_contents($source), $this->media->visibility
-        );
+        if (is_file($source)) {
+            // Because the source is a local file we need to move it manually. Otherwise, the filesystem copy
+            // will add a prefix causing the file to not be copied.
+            $this->filesystem->makeDirectory(dirname($target));
+
+            @copy($source, $this->filesystem->path($target));
+        } else {
+            $this->filesystem->copy($source, $target);
+        }
     }
 
     /**
