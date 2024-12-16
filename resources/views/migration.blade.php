@@ -1,17 +1,16 @@
 <?php echo "<?php\n" ?>
 
 use Torann\MediaSort\Manager;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class Add{{ ucfirst($attachment) }}FieldsTo{{ $class_name }}Table extends Migration
+return new class extends Migration
 {
     /**
-     * Make changes to the table.
-     *
-     * @return void
+     * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('{{ $table }}', function(Blueprint $table) {
             $table->string('{{ $attachment }}_file_name')->nullable();
@@ -26,11 +25,9 @@ class Add{{ ucfirst($attachment) }}FieldsTo{{ $class_name }}Table extends Migrat
     }
 
     /**
-     * Revert the changes to the table.
-     *
-     * @return void
+     * Reverse the migrations.
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('{{ $table }}', function(Blueprint $table) {
             $table->dropColumn('{{ $attachment }}_file_name');
@@ -43,4 +40,4 @@ class Add{{ ucfirst($attachment) }}FieldsTo{{ $class_name }}Table extends Migrat
 
         });
     }
-}
+};

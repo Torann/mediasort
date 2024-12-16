@@ -30,8 +30,6 @@ class FastenCommand extends Command
     protected $description = 'Generate a migration for adding MediaSort file fields to a database table.';
 
     /**
-     * Create a new command instance.
-     *
      * @param Factory    $view
      * @param Filesystem $file
      */

@@ -26,8 +26,6 @@ class RefreshCommand extends Command
     protected $description = 'Regenerate images for a given model (and optional attachment and styles)';
 
     /**
-     * Create a new command instance.
-     *
      * @param ImageRefreshService $image_refresh_service
      */
     public function __construct(ImageRefreshService $image_refresh_service)

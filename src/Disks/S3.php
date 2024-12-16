@@ -29,7 +29,7 @@ class S3 implements Disk
     /**
      * {@inheritDoc}
      */
-    public function remove(array $files)
+    public function remove(array $files): void
     {
         foreach ($files as $file) {
             try {
@@ -43,7 +43,7 @@ class S3 implements Disk
     /**
      * {@inheritDoc}
      */
-    public function move(string $source, string $target)
+    public function move(string $source, string $target): void
     {
         $this->filesystem->put(
             $target, file_get_contents($source), $this->media->visibility

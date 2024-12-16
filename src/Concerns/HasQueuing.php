@@ -92,7 +92,7 @@ trait HasQueuing
      *
      * @return void
      */
-    public function updateQueueState(int $state)
+    public function updateQueueState(int $state): void
     {
         if ($this->isQueueable()) {
             $this->getModel()

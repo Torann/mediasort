@@ -8,16 +8,16 @@ use Torann\MediaSort\Exceptions\InvalidClassException;
 
 trait HasDisks
 {
-    protected null|Disk $disk_instance = null;
+    protected Disk|null $disk_instance = null;
 
     /**
      * Set disk property.
      *
      * @param string $name
      *
-     * @return self
+     * @return static
      */
-    public function setDisk(string $name)
+    public function setDisk(string $name): static
     {
         $this->__set('disk', $name);
 
@@ -59,7 +59,7 @@ trait HasDisks
      * @throws InvalidClassException
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    protected function remove(array $files)
+    protected function remove(array $files): void
     {
         $this->getDisk()->remove($files);
     }
@@ -74,7 +74,7 @@ trait HasDisks
      * @throws InvalidClassException
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    protected function move(string $source, string $target)
+    protected function move(string $source, string $target): void
     {
         $this->getDisk()->move($source, $target);
     }

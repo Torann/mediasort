@@ -20,8 +20,6 @@ class Resizer
     protected ImagineInterface|null $imagine = null;
 
     /**
-     * Constructor method
-     *
      * @param string $image_processor
      * @param array  $options
      *
@@ -88,8 +86,6 @@ class Resizer
     }
 
     /**
-     * parseStyleDimensions method
-     *
      * Parse the given style dimensions to extract out the file processing options,
      * perform any necessary image resizing for a given style.
      *

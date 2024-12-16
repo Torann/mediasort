@@ -11,7 +11,7 @@ interface Disk
      *
      * @return void
      */
-    public function remove(array $files);
+    public function remove(array $files): void;
 
     /**
      * Move an uploaded file to it's intended target.
@@ -21,5 +21,5 @@ interface Disk
      *
      * @return void
      */
-    public function move(string $source, string $target);
+    public function move(string $source, string $target): void;
 }

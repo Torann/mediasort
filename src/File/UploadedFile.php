@@ -33,11 +33,11 @@ class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
      * @throws FileException
      */
     public function __construct(
-        string $path,
-        string $originalName,
-        string $mimeType = null,
-        int    $error = null,
-        bool   $test = false
+        string      $path,
+        string      $originalName,
+        string|null $mimeType = null,
+        int|null    $error = null,
+        bool        $test = false
     ) {
         parent::__construct($path, $originalName, $mimeType, $error, $test);
 

@@ -43,7 +43,7 @@ trait HasConfig
      * @return void
      * @throws Exception
      */
-    public function setConfig(array $config = null)
+    public function setConfig(array|null $config = null): void
     {
         // Get the system set configuration
         $this->config = config('mediasort', []);

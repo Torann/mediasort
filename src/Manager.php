@@ -51,7 +51,7 @@ class Manager
      *
      * @throws Exception
      */
-    public function __construct(string $name, array $config = null)
+    public function __construct(string $name, array|null $config = null)
     {
         $this->name = $name;
 
