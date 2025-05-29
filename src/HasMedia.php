@@ -204,7 +204,7 @@ trait HasMedia
      * @return Manager
      * @throws Exception
      */
-    protected function getMediaInstance(string $name): Manager
+    public function getMediaInstance(string $name): Manager
     {
         if (array_key_exists($name, $this->media_instances) === false) {
             $this->media_instances[$name] = $this->getMedia($name);
