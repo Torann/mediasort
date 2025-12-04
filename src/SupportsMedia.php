@@ -7,6 +7,13 @@ use Generator;
 interface SupportsMedia
 {
     /**
+     * Determine if a media upload was added.
+     *
+     * @return bool
+     */
+    public function hasMediaUpload(string $name): bool;
+
+    /**
      * Accessor method for the media instance property.
      *
      * @return Generator
