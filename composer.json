@@ -20,13 +20,13 @@
   ],
   "require": {
     "php": "^8.2",
-    "illuminate/support": "^9.0|^10.0|^11.0",
-    "illuminate/container": "^9.0|^10.0|^11.0",
-    "illuminate/console": "^9.0|^10.0|^11.0",
-    "illuminate/filesystem": "^9.0|^10.0|^11.0",
-    "illuminate/database": "^9.0|^10.0|^11.0",
-    "illuminate/http": "^9.0|^10.0|^11.0",
-    "illuminate/view": "^9.0|^10.0|^11.0",
+    "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
+    "illuminate/container": "^9.0|^10.0|^11.0|^12.0",
+    "illuminate/console": "^9.0|^10.0|^11.0|^12.0",
+    "illuminate/filesystem": "^9.0|^10.0|^11.0|^12.0",
+    "illuminate/database": "^9.0|^10.0|^11.0|^12.0",
+    "illuminate/http": "^9.0|^10.0|^11.0|^12.0",
+    "illuminate/view": "^9.0|^10.0|^11.0|^12.0",
     "imagine/imagine": "^1.5"
   },
   "require-dev": {
