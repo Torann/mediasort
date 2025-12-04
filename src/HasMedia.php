@@ -78,6 +78,14 @@ trait HasMedia
     /**
      * {@inheritDoc}
      */
+    public function hasMediaUpload(string $name): bool
+    {
+        return isset($this->media[$name]['file']);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getMediaFiles(): Generator
     {
         foreach (array_keys($this->media) as $name) {
